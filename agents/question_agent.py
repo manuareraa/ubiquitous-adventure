@@ -75,48 +75,68 @@ class QuestioningAgent(object):
         """Generate an MCQ based question on given topic with specified difficulty"""
         
         if wadvsys:
-            # TODO: Manipulate this SYS prompt for better results
+            # Updated system prompt to be more flexible and follow ICL examples
             sys_prompt = """
-            You are an **expert-level examiner** with deep expertise in designing **highly challenging and conceptually rigorous multiple-choice questions (MCQs)** for the **Quantitative Aptitude and Analytical Reasoning** sections of top-tier competitive exams.
-            Think step by step to generate the question and solve the same, but only output the final answer. Do not show your thinking process.
-            **Please DO NOT reveal the solution steps or any intermediate reasoning.**
+            You are an **expert question designer** with deep expertise in creating **sophisticated, challenging multiple-choice questions (MCQs)** that match the exact style, complexity, and format of the provided examples.
+
+            **CRITICAL INSTRUCTIONS:**
+            1. **FOLLOW THE EXAMPLES EXACTLY**: Study the provided examples carefully and replicate their style, complexity, vocabulary, and structure precisely.
+            2. **MATCH THE DIFFICULTY**: Create questions at the same intellectual level as the examples - use similar reasoning depth, terminology, and conceptual sophistication.
+            3. **PRESERVE THE TONE**: Maintain the same formal, academic tone and vocabulary level as demonstrated in the examples.
+            4. **REPLICATE STRUCTURE**: Follow the same question format, choice presentation, and explanation style as shown in the examples.
+            5. **MAINTAIN COMPLEXITY**: Ensure your questions require the same level of logical reasoning and multi-step thinking as the examples.
+            
+            **QUALITY REQUIREMENTS:**
+            - Questions must be intellectually challenging and require deep reasoning
+            - Distractors must be sophisticated and plausible to advanced test-takers
+            - Explanations should match the depth and style of the provided examples
+            - Use precise, academic language consistent with the examples
+            
+            Generate questions that an expert would recognize as being from the same source as the examples.
             """
         else:
-            sys_prompt = "You are an examiner tasked with creating extremely difficult multiple-choice questions"
+            sys_prompt = "You are a helpful assistant that generates multiple-choice questions."
+
+        # Enhanced prompt template that emphasizes following examples
         tmpl = (
-            'Generate an EXTREMELY DIFFICULT MCQ on topic: {0}.\n\n'
-
-            '**CRITICAL REQUIREMENTS:**\n'
-            '1.  **Topic Alignment**: The "question" must be strictly relevant to the topic: {1}.\n'
-            '2.  **Question Quality**: The question must be EXTREMELY DIFFICULT, clear, and test deep conceptual understanding. Avoid trivial or ambiguous questions.\n'
-            '3.  **Choices (4 total)**: Generate exactly FOUR multiple-choice options, labeled "A)", "B)", "C)", and "D)".\n'
-            '4.  **Single Correct Answer**: Ensure that option {2} is only factually correct.\n'
-            '5.  **Plausible Distractors**: While option {3} are three incorrect UNIQUE choices which are highly plausible and common misconceptions related to the topic, designed to mislead someone without expert knowledge.\n'
-            '6.  **Answer Key**: The "answer" field in the JSON should be ONLY the letter {4}.\n'
-            '7.  **Explanation**: The "explanation" field provides a concise (under 100 words) and clear justification for why the correct answer is correct.\n\n'
-
-            '{5}'
-            
-            'RESPONSE FORMAT: Strictly generate a valid JSON object ensuring proper syntax and structure as shown below.\n\n'
-            
-            'EXAMPLE: {6}\n'
+            'Topic: {}\n\n'
+            'CRITICAL: Study these examples carefully and create a question that matches their EXACT style, complexity, vocabulary, and format:\n\n'
+            '{}\n\n'
+            '---\n\n'
+            'Now create a NEW question on the topic "{}" that:\n'
+            '- Matches the EXACT style and complexity of the examples above\n'
+            '- Uses similar vocabulary and sentence structure\n'
+            '- Has the same level of intellectual challenge\n'
+            '- Follows the same format for choices and explanations\n'
+            '- Has the correct answer as option {}\n'
+            '- Has plausible distractors in options {}\n\n'
+            'Topic: {}\n'
+            'Subtopic: {}\n'
+            'Required answer option: {}\n\n'
+            'Output ONLY valid JSON in this exact format:\n'
             '{{\n'
-            '  "topic": "{7}",\n'
-            '  "question": "...",\n'
-            '  "choices": ["A) ...", "B) ...", "C) ...", "D) ..."],\n'
-            '  "answer": "{8}",\n'
-            '  "explanation": "Provide a brief explanation why {9} is correct within 100 words."\n'
+            '  "topic": "{}",\n'
+            '  "question": "Your question here - match the style of the examples exactly",\n'
+            '  "choices": ["A) First option", "B) Second option", "C) Third option", "D) Fourth option"],\n'
+            '  "answer": "{}",\n'
+            '  "explanation": "Detailed explanation matching the style and depth of the examples"\n'
             '}}'
         )
         # Remove model's preferential bias for options
         correct_option = random.choice(['A', 'B', 'C', 'D'])
         distractors = ", ".join([opt for opt in ['A', 'B', 'C', 'D'] if opt != correct_option])
 
-        if wicl:
+        if wicl and inc_samples:
             inc_samples_ex = self.build_inc_samples(inc_samples, topic)
+            print(f"📝 [PROMPT] ICL examples included: {len(inc_samples_ex)} characters")
         else:
-            inc_samples_ex = ""
-        prompt = tmpl.format(topic, topic, correct_option, distractors, correct_option, inc_samples_ex, topic, topic.split('/')[-1], correct_option, correct_option)
+            inc_samples_ex = "No examples provided."
+            print("⚠️  [PROMPT] No ICL examples included in prompt")
+            
+        prompt = tmpl.format(topic, inc_samples_ex, topic, correct_option, distractors, topic, topic.split('/')[-1], correct_option, topic.split('/')[-1], correct_option)
+        
+        print(f"📊 [PROMPT] Total prompt length: {len(prompt)} characters")
+        print(f"🎯 [PROMPT] Correct answer set to: {correct_option}")
 
         return prompt, sys_prompt
 
@@ -126,10 +146,38 @@ class QuestioningAgent(object):
         if isinstance(topic, list):
             prompt = []
             for t in topic:
-                p, sp = self.build_prompt(f"{t[0]}/{t[1]}", wadvsys, wicl, inc_samples[t[1]])
+                # Add verbose logging for ICL sample lookup
+                topic_key = t[1]  # This is the subtopic name
+                print(f"🔍 [ICL] Looking for examples for topic: '{topic_key}'")
+                
+                # Safe ICL sample lookup with fallback
+                topic_samples = []
+                if inc_samples and topic_key in inc_samples:
+                    topic_samples = inc_samples[topic_key]
+                    print(f"✅ [ICL] Found {len(topic_samples)} examples for '{topic_key}'")
+                    if topic_samples:
+                        print(f"📝 [ICL] First example question: {topic_samples[0].get('question', 'N/A')[:100]}...")
+                else:
+                    print(f"⚠️  [ICL] No examples found for '{topic_key}' - available keys: {list(inc_samples.keys()) if inc_samples else 'None'}")
+                
+                p, sp = self.build_prompt(f"{t[0]}/{t[1]}", wadvsys, wicl, topic_samples)
                 prompt.append(p)
         else:
-            prompt, sp = self.build_prompt(f"{topic[0]}/{topic[1]}", wadvsys, wicl, inc_samples[topic[1]])
+            # Add verbose logging for single topic
+            topic_key = topic[1]
+            print(f"🔍 [ICL] Looking for examples for single topic: '{topic_key}'")
+            
+            # Safe ICL sample lookup with fallback
+            topic_samples = []
+            if inc_samples and topic_key in inc_samples:
+                topic_samples = inc_samples[topic_key]
+                print(f"✅ [ICL] Found {len(topic_samples)} examples for '{topic_key}'")
+                if topic_samples:
+                    print(f"📝 [ICL] First example question: {topic_samples[0].get('question', 'N/A')[:100]}...")
+            else:
+                print(f"⚠️  [ICL] No examples found for '{topic_key}' - available keys: {list(inc_samples.keys()) if inc_samples else 'None'}")
+            
+            prompt, sp = self.build_prompt(f"{topic[0]}/{topic[1]}", wadvsys, wicl, topic_samples)
         
         resp, tl, gt = self.agent.generate_response(prompt, sp, **gen_kwargs)
 
