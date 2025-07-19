@@ -34,14 +34,25 @@ class QAgent(object):
             ]
             all_messages.append(messages)
         
-        # Convert messages to text format using chat template with thinking mode enabled
+        # Convert messages to text format using chat template with selective thinking mode
         texts = []
+        # Control thinking mode - enable only for question creation, not for choices/post-processing
+        enable_thinking_mode = kwargs.get("enable_thinking", True)  # Allow override
+        thinking_stage = kwargs.get("thinking_stage", "question_creation")  # question_creation, distractor_generation, validation
+        
+        # Restrict thinking to question creation only (as requested by user)
+        if thinking_stage != "question_creation":
+            enable_thinking_mode = False
+            print(f"🧠 [THINKING] Disabled for stage: {thinking_stage}")
+        else:
+            print(f"🧠 [THINKING] Enabled for stage: {thinking_stage}")
+            
         for messages in all_messages:
             text = self.tokenizer.apply_chat_template(
                 messages,
                 tokenize=False,
                 add_generation_prompt=True,
-                enable_thinking=True  # Enable thinking mode by default
+                enable_thinking=enable_thinking_mode
             )
             texts.append(text)
         

@@ -2,7 +2,7 @@
 
 import json
 from typing import Dict, List
-from .config import StrategyConfig
+from config import StrategyConfig
 
 class DistractorValidator:
     

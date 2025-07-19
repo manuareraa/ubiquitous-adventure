@@ -3,9 +3,9 @@
 import json
 import random
 from typing import Dict, List, Tuple
-from .prompt_templates import PromptTemplates
-from .config import StrategyConfig
-from .validator import DistractorValidator
+from prompt_templates import PromptTemplates
+from config import StrategyConfig
+from validator import DistractorValidator
 
 class AdversarialDistractorEngine:
     def __init__(self, model_agent):
