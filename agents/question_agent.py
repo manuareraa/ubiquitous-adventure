@@ -391,7 +391,77 @@ class QuestioningAgent(object):
         print(f"❌ [SUMMARY] Failed generations: {len(questions) - successful_questions}")
         print(f"🎯 [SUMMARY] Strategy used: {'Adversarial' if use_adversarial else 'Standard'}")
         
-        return questions, tls, gts
+        # JSON Validation and Self-Correction (based on original file approach)
+        print(f"\n🔍 [VALIDATION] Starting JSON validation and correction...")
+        validated_questions = []
+        
+        for i, q in enumerate(questions):
+            if not q:  # Skip empty questions
+                print(f"❌ [Q{i+1}] Empty question, skipping")
+                continue
+                
+            try:
+                # Try to parse as JSON first
+                if isinstance(q, str):
+                    json.loads(q)
+                    validated_questions.append(q)
+                    print(f"✅ [Q{i+1}] Valid JSON detected")
+                elif isinstance(q, dict):
+                    validated_questions.append(q)
+                    print(f"✅ [Q{i+1}] Valid dict object detected")
+            except json.JSONDecodeError as e:
+                print(f"❌ [Q{i+1}] Invalid JSON format: {str(e)[:100]}...")
+                print(f"🔧 [Q{i+1}] Attempting self-correction...")
+                
+                # Use self-correction prompt (from original file)
+                correction_prompt = (
+                    'Extract **ONLY** the topic, question, choices, answer, and explanation while discarding the rest.\n'
+                    'Also please remove JSON code block text with backticks** like **```json** and **```**.\n\n'
+                    
+                    'String:\n'
+                    '{}\n\n'
+
+                    'Given Format:\n'
+                    '{{\n'
+                    '  "topic": "...",\n'
+                    '  "question": "...",\n'
+                    '  "choices": ["A) ...", "B) ...", "C) ...", "D) ..."],\n'
+                    '  "answer": "Only the option letter (A, B, C, or D)",\n'
+                    '  "explanation": "..."\n'
+                    '}}'
+                )
+                
+                try:
+                    # Generate corrected JSON without thinking mode
+                    corrected_q = self.agent.generate_response(
+                        correction_prompt.format(q),
+                        "You are an expert JSON extractor.",
+                        enable_thinking=False,
+                        thinking_stage="json_correction",
+                        max_new_tokens=1024,
+                        temperature=0.0,
+                        do_sample=False
+                    )
+                    
+                    # Validate corrected output
+                    json.loads(corrected_q)
+                    validated_questions.append(corrected_q)
+                    print(f"✅ [Q{i+1}] Self-correction successful")
+                    
+                except (json.JSONDecodeError, Exception) as correction_error:
+                    print(f"❌ [Q{i+1}] Self-correction failed: {str(correction_error)[:50]}...")
+                    print(f"🔄 [Q{i+1}] Skipping malformed question")
+                    continue
+        
+        print(f"\n📊 [VALIDATION] {len(validated_questions)}/{len(questions)} questions passed JSON validation")
+        
+        # Apply MCQ structure filtering
+        print(f"🔍 [FILTERING] Applying MCQ structure validation...")
+        filtered_questions = self.filter_questions(validated_questions)
+        
+        print(f"📈 [FINAL] {len(filtered_questions)} questions ready for output")
+        
+        return filtered_questions, tls, gts
 
     def count_tokens_q(self, text: str) -> int:
         """Count the number of tokens using model.tokenizer"""
@@ -400,6 +470,7 @@ class QuestioningAgent(object):
         return len(self.agent.tokenizer.encode(text, add_special_tokens=False))
 
     def filter_questions(self, questions: List[str|Dict[str, str|Any]]) -> List[Dict[str, str|Any]]:
+        """Filter and validate questions to ensure proper JSON format and MCQ structure"""
         def basic_checks(q2: Dict[str, str])->bool:
             # check required keys
             required_keys = ['topic', 'question', 'choices', 'answer']
@@ -417,25 +488,38 @@ class QuestioningAgent(object):
                             if isinstance(q2['answer'], str):
                                 return True
             return False
+            
         correct_format_question = []
         for i, q in enumerate(questions):
             if isinstance(q, dict):
                 if basic_checks(q):
                     correct_format_question.append(q)
+                    print(f"✅ [FILTER] Question {i+1} passed validation")
+                else:
+                    print(f"❌ [FILTER] Question {i+1} failed validation (dict format)")
             elif isinstance(q, str):
                 try:
                     q1 = json.loads(q)
                     if basic_checks(q1):
                         correct_format_question.append(q1)
+                        print(f"✅ [FILTER] Question {i+1} passed validation")
+                    else:
+                        print(f"❌ [FILTER] Question {i+1} failed validation (parsed JSON)")
                 except json.JSONDecodeError:
                     # If JSON decoding fails, skip this answer
-                    print(f"Skipping invalid JSON at index {i}: {q}")
+                    print(f"❌ [FILTER] Skipping invalid JSON at index {i}: {q[:100]}...")
                     continue
             else:
+                print(f"❌ [FILTER] Question {i+1} has invalid type: {type(q)}")
                 continue
+                
+        print(f"📊 [FILTER] {len(correct_format_question)}/{len(questions)} questions passed validation")
+        
         if len(correct_format_question) >= 0.5 * len(questions):
             return correct_format_question
-        return list()
+        else:
+            print(f"⚠️ [FILTER] Too many failed questions ({len(correct_format_question)}/{len(questions)}), returning empty list")
+            return list()
     
     def save_questions(self, questions: Any, file_path: str|Path) -> None:
         """Save generated questions to a JSON file"""
@@ -550,19 +634,18 @@ if __name__ == "__main__":
     print("🚀 [GENERATION] Starting question generation process...")
     print("-"*80)
     
-    question, tls, gts = agent.generate_batches(
+    questions, tls, gts = agent.generate_batches(
         num_questions=args.num_questions,
         topics=topics, 
         batch_size=args.batch_size,
         wadvsys=True,
         wicl=True,
-        inc_samples=inc_samples,
         use_adversarial=use_adversarial,
         **gen_kwargs
     )
-    print(f"Generated {len(question)} questions!")
+    print(f"Generated {len(questions)} questions!")
     if args.verbose:
-        for q in question:
+        for q in questions:
             print(q, flush=True)
         print("\n" + "="*50 + "\n\n")
         if gen_kwargs.get("tgps_show", False):
@@ -571,38 +654,13 @@ if __name__ == "__main__":
             print(f"Total Time Taken: {sum(gts):.3f} seconds; Total Tokens: {sum(tls)}; TGPS: {sum(tls)/sum(gts):.3f} seconds\n\n")
         print("\n" + "+"*50 + "\n")
 
-    # check if question is JSON format
-    ques = []
-    for q in question:
-        try:
-            json.loads(q)
-        except json.JSONDecodeError as e:
-            print(f"Invalid JSON format in question: {q}\nError: {e}")
-            # use agent itself to extract JSON: Self-Reflection
-            # the dictionary is not as expected.
-            # TODO: IMPROVE THE FOLLOWING
-            prompt = (
-                'Extract **ONLY** the topic, question, choices, answer, and explanation while discarding the rest.\n'
-                'Also please remove JSON code block text with backticks** like **```json** and **```**.\n\n'
-                
-                'String:\n'
-                '{}\n\n'
-
-                'Given Format:\n'
-                '{{\n'
-                '  "topic": "...",\n'
-                '  "question": "...",\n'
-                '  "choices": ["A) ...", "B) ...", "C) ...", "D) ..."],\n'
-                '  "answer": "Only the option letter (A, B, C, or D)",\n'
-                '  "explanation": "..."\n'
-                '}}'
-            )
-            q = agent.agent.generate_response(prompt.format(q), "You are an expert JSON extractor.", max_new_tokens=1024, temperature=0.0, do_sample=False)
-        ques.append(q)
-    # Save the questions for later analysis
-    agent.save_questions(ques, args.output_file)
-    filtered_file_name = args.output_file.replace("questions.json", "filtered_questions.json")
-    agent.save_questions(agent.filter_questions(ques), filtered_file_name)
-    print(f"Saved to {args.output_file}!")
+    # Save questions (validation and filtering already done in generate_batches)
+    if questions:
+        agent.save_questions(questions, args.output_file)
+        print(f"✅ [SAVE] Saved {len(questions)} validated questions to {args.output_file}")
+    else:
+        print(f"❌ [ERROR] No valid questions generated! Check your prompts and model configuration.")
+        # Still save empty file for debugging
+        agent.save_questions([], args.output_file.replace('.json', '_failed.json'))
 
     # ========================================================================================

@@ -3,6 +3,7 @@ import time
 import torch
 from typing import Optional, Union, List
 from transformers import AutoModelForCausalLM, AutoTokenizer
+import json
 
 class QAgent(object):
     def __init__(self, **kwargs):
@@ -20,8 +21,16 @@ class QAgent(object):
         )
 
     def generate_response(self, message: str|List[str], system_prompt: Optional[str] = None, **kwargs)->str:
+        # Enhanced system prompt based on original file approach
+        sys_prompt = """You are an **expert-level examiner** with deep expertise in designing **highly challenging and conceptually rigorous multiple-choice questions (MCQs)** for the **Quantitative Aptitude and Analytical Reasoning** sections of top-tier competitive exams.
+
+Think step by step to generate the question and solve the same, but only output the final JSON answer. Do not show your thinking process.
+
+**CRITICAL: Please DO NOT reveal the solution steps or any intermediate reasoning in your final output. Output ONLY the JSON object.**
+
+**STYLE MATCHING**: Follow the exact style, complexity, vocabulary, and structure of the provided examples. Match their tone, difficulty level, and presentation format."""
         if system_prompt is None:
-            system_prompt = "You are a helpful assistant."
+            system_prompt = sys_prompt
         if isinstance(message, str):
             message = [message]
         
@@ -86,32 +95,83 @@ class QAgent(object):
         batch_outs = []
         token_len = 0
         
+        thinking_token_id = 151668  # </think> token ID
+        
         for i, output_ids in enumerate(generated_ids):
             # Remove input tokens to get only generated content
             input_length = len(model_inputs.input_ids[i])
-            output_ids = output_ids[input_length:].tolist()
+            output_ids = output_ids[input_length:]
             token_len += len(output_ids)
             
-            # Extract thinking content and final response
-            try:
-                # Find the end of thinking block (token 151668 is </think>)
-                index = len(output_ids) - output_ids[::-1].index(151668) if 151668 in output_ids else 0
-            except ValueError:
-                index = 0
-            
-            # Decode thinking content (if any)
+            # Extract thinking content and final answer
             thinking_content = ""
-            if index > 0:
-                thinking_content = self.tokenizer.decode(output_ids[:index], skip_special_tokens=True).strip("\n")
+            final_answer = self.tokenizer.decode(output_ids, skip_special_tokens=True).strip("\n")
             
-            # Decode final response content
-            content = self.tokenizer.decode(output_ids[index:], skip_special_tokens=True).strip("\n")
+            if enable_thinking_mode and thinking_token_id in output_ids:
+                # Find the thinking end token
+                thinking_positions = (output_ids == thinking_token_id).nonzero(as_tuple=True)[0]
+                if len(thinking_positions) > 0:
+                    thinking_end_pos = thinking_positions[-1].item()  # Last occurrence
+                    
+                    # Extract thinking content (before </think>)
+                    thinking_tokens = output_ids[:thinking_end_pos]
+                    thinking_content = self.tokenizer.decode(thinking_tokens, skip_special_tokens=True)
+                    
+                    # Extract final answer (after </think>)
+                    final_tokens = output_ids[thinking_end_pos + 1:]
+                    final_answer = self.tokenizer.decode(final_tokens, skip_special_tokens=True).strip()
+                    
+                    if kwargs.get("show_thinking", False) and thinking_content:
+                        print(f" [THINKING] Model reasoning:\n{thinking_content}")
+                        print(f" [FINAL] Model answer:\n{final_answer}")
             
-            # For debugging/verbose mode, you can print thinking content
-            if kwargs.get("show_thinking", False) and thinking_content:
-                print(f"🧠 [THINKING]: {thinking_content[:200]}...")
+            # JSON Extraction and Self-Correction (based on original file)
+            if final_answer:
+                try:
+                    # Try to parse as JSON first
+                    json.loads(final_answer)
+                    print(" [JSON] Valid JSON output detected")
+                except json.JSONDecodeError as e:
+                    print(f" [JSON] Invalid JSON format detected: {e}")
+                    print(" [JSON] Attempting self-correction...")
+                    
+                    # Use self-correction prompt (from original file)
+                    correction_prompt = (
+                        'Extract **ONLY** the topic, question, choices, answer, and explanation while discarding the rest.\n'
+                        'Also please remove JSON code block text with backticks** like **```json** and **```**.\n\n'
+                        
+                        'String:\n'
+                        '{}\n\n'
+
+                        'Given Format:\n'
+                        '{{\n'
+                        '  "topic": "...",\n'
+                        '  "question": "...",\n'
+                        '  "choices": ["A) ...", "B) ...", "C) ...", "D) ..."],\n'
+                        '  "answer": "Only the option letter (A, B, C, or D)",\n'
+                        '  "explanation": "..."\n'
+                        '}}'
+                    )
+                    
+                    # Generate corrected JSON without thinking mode
+                    corrected_output = self.generate_response(
+                        correction_prompt.format(final_answer),
+                        "You are an expert JSON extractor.",
+                        enable_thinking=False,
+                        thinking_stage="json_correction",
+                        max_new_tokens=1024,
+                        temperature=0.0,
+                        do_sample=False
+                    )
+                    
+                    try:
+                        json.loads(corrected_output)
+                        final_answer = corrected_output
+                        print(" [JSON] Self-correction successful")
+                    except json.JSONDecodeError:
+                        print(" [JSON] Self-correction failed, returning original")
             
-            batch_outs.append(content)
+            batch_outs.append(final_answer)
         
         if tgps_show_var:
             return batch_outs[0] if len(batch_outs) == 1 else batch_outs, token_len, generation_time
