@@ -20,8 +20,14 @@ class QuestioningAgent(object):
         r"""
         Build a string of example questions from the provided samples.
         """
+        print(f"\n[DEBUG] build_inc_samples called for topic: {topic}")
+        
         if not inc_samples:
+            print(f"[DEBUG] No ICL samples provided for topic: {topic}")
             return ""
+        
+        print(f"[DEBUG] Processing {len(inc_samples)} ICL samples for topic: {topic}")
+        
         fmt = (
             "EXAMPLE: {}\n"
             "{{\n"
@@ -34,17 +40,43 @@ class QuestioningAgent(object):
         )
 
         sample_str = ""
-        for sample in inc_samples:
+        for i, sample in enumerate(inc_samples):
+            print(f"[DEBUG] Processing sample {i+1}/{len(inc_samples)}:")
+            
             question = sample.get("question", "")
             choices = sample.get("choices", [""] * 4)
             answer = sample.get("answer", "")
             explanation = sample.get("explanation", "")
-            sample_str += (
-                fmt.format(
-                    topic, topic.split("/")[-1], question, *choices, answer, explanation
-                )
-                + "\n\n"
+            
+            print(f"[DEBUG]   Question preview: {question[:80]}...")
+            print(f"[DEBUG]   Choices count: {len(choices)}")
+            print(f"[DEBUG]   Answer: {answer}")
+            print(f"[DEBUG]   Raw choices: {choices}")
+            
+            # Extract choice text without A), B), C), D) prefixes
+            choice_texts = []
+            for j, choice in enumerate(choices):
+                if choice.startswith(("A) ", "B) ", "C) ", "D) ")):
+                    clean_choice = choice[3:]  # Remove first 3 characters
+                    choice_texts.append(clean_choice)
+                    print(f"[DEBUG]     Choice {j+1}: '{choice}' -> '{clean_choice}'")
+                else:
+                    choice_texts.append(choice)
+                    print(f"[DEBUG]     Choice {j+1}: '{choice}' (no prefix to remove)")
+            
+            # Ensure we have exactly 4 choices
+            while len(choice_texts) < 4:
+                choice_texts.append("")
+                print(f"[DEBUG]   Added empty choice to reach 4 total")
+            
+            formatted_sample = fmt.format(
+                topic, topic.split("/")[-1], question, *choice_texts[:4], answer, explanation
             )
+            sample_str += formatted_sample + "\n\n"
+            
+        print(f"[DEBUG] Built ICL string length: {len(sample_str)} characters")
+        print(f"[DEBUG] ICL string preview (first 200 chars): {sample_str[:200]}...")
+        
         return sample_str.strip()
 
     def build_prompt(
@@ -55,7 +87,13 @@ class QuestioningAgent(object):
         inc_samples: List[Dict[str, str]] | None = None,
     ) -> Tuple[str, str]:
         """Generate an MCQ based question on given topic with specified difficulty"""
-
+        
+        print(f"\n[DEBUG] build_prompt called for topic: {topic}")
+        print(f"[DEBUG] wadvsys: {wadvsys}, wicl: {wicl}")
+        print(f"[DEBUG] inc_samples provided: {inc_samples is not None}")
+        if inc_samples:
+            print(f"[DEBUG] inc_samples count: {len(inc_samples)}")
+        
         if wadvsys:
             # TODO: Manipulate this SYS prompt for better results
             sys_prompt = """
@@ -63,8 +101,10 @@ class QuestioningAgent(object):
             Think step by step to generate the question and solve the same, but only output the final answer. Do not show your thinking process.
             **Please DO NOT reveal the solution steps or any intermediate reasoning.**
             """
+            print(f"[DEBUG] Using advanced system prompt")
         else:
             sys_prompt = "You are an examiner tasked with creating extremely difficult multiple-choice questions"
+            print(f"[DEBUG] Using basic system prompt")
         tmpl = (
             "Generate an EXTREMELY DIFFICULT MCQ on topic: {0}.\n\n"
             "**CRITICAL REQUIREMENTS:**\n"
@@ -91,11 +131,21 @@ class QuestioningAgent(object):
         distractors = ", ".join(
             [opt for opt in ["A", "B", "C", "D"] if opt != correct_option]
         )
+        
+        print(f"[DEBUG] Selected correct option: {correct_option}")
+        print(f"[DEBUG] Distractors: {distractors}")
 
         if wicl:
+            print(f"[DEBUG] ICL enabled - calling build_inc_samples")
             inc_samples_ex = self.build_inc_samples(inc_samples, topic)
+            print(f"[DEBUG] ICL samples string length: {len(inc_samples_ex)}")
+            if inc_samples_ex:
+                print(f"[DEBUG] ICL samples preview (first 150 chars): {inc_samples_ex[:150]}...")
         else:
+            print(f"[DEBUG] ICL disabled - no examples will be included")
             inc_samples_ex = ""
+            
+        print(f"[DEBUG] Formatting final prompt with template")
         prompt = tmpl.format(
             topic,
             topic,
@@ -108,6 +158,9 @@ class QuestioningAgent(object):
             correct_option,
             correct_option,
         )
+        
+        print(f"[DEBUG] Final prompt length: {len(prompt)} characters")
+        print(f"[DEBUG] Final prompt preview (first 300 chars): {prompt[:300]}...")
 
         return prompt, sys_prompt
 
@@ -120,22 +173,70 @@ class QuestioningAgent(object):
         **gen_kwargs,
     ) -> Tuple[List[str], int | None, float | None]:
         """Generate a question prompt for the LLM"""
+        
+        print(f"\n[DEBUG] ===== generate_question called =====")
+        print(f"[DEBUG] Topic type: {type(topic).__name__}")
+        print(f"[DEBUG] wadvsys: {wadvsys}, wicl: {wicl}")
+        print(f"[DEBUG] inc_samples provided: {inc_samples is not None}")
+        if inc_samples:
+            print(f"[DEBUG] Available ICL topics: {list(inc_samples.keys())}")
+        
         if isinstance(topic, list):
+            print(f"[DEBUG] Processing batch of {len(topic)} topics")
             prompt = []
-            for t in topic:
+            for i, t in enumerate(topic):
+                print(f"\n[DEBUG] --- Processing topic {i+1}/{len(topic)} ---")
                 topic_str = f"{t[0]}/{t[1]}"  # for prompt construction
                 subtopic = t[1]  # key for inc_samples
-                icl_data = inc_samples.get(subtopic, [])
+                
+                print(f"[DEBUG] Main topic: {t[0]}")
+                print(f"[DEBUG] Subtopic: {subtopic}")
+                print(f"[DEBUG] Full topic string: {topic_str}")
+                
+                # ICL sample retrieval with detailed logging
+                if inc_samples:
+                    icl_data = inc_samples.get(subtopic, [])
+                    if icl_data:
+                        print(f"[DEBUG] ✓ Found {len(icl_data)} ICL samples for subtopic: '{subtopic}'")
+                        print(f"[DEBUG] Sample preview: {icl_data[0]['question'][:60]}...")
+                    else:
+                        print(f"[DEBUG] ✗ No ICL samples found for subtopic: '{subtopic}'")
+                        print(f"[DEBUG] Available subtopics: {list(inc_samples.keys())}")
+                else:
+                    icl_data = []
+                    print(f"[DEBUG] No inc_samples dictionary provided")
+                
                 if wicl and not icl_data:
-                    print(f"[Warning] No ICL samples found for subtopic: '{subtopic}'")
+                    print(f"[WARNING] ICL enabled but no samples found for subtopic: '{subtopic}'")
+                
                 p, sp = self.build_prompt(topic_str, wadvsys, wicl, icl_data)
                 prompt.append(p)
+                print(f"[DEBUG] Generated prompt for topic {i+1}")
         else:
+            print(f"[DEBUG] Processing single topic")
             topic_str = f"{topic[0]}/{topic[1]}"
             subtopic = topic[1]
-            icl_data = inc_samples.get(subtopic, [])
+            
+            print(f"[DEBUG] Main topic: {topic[0]}")
+            print(f"[DEBUG] Subtopic: {subtopic}")
+            print(f"[DEBUG] Full topic string: {topic_str}")
+            
+            # ICL sample retrieval with detailed logging
+            if inc_samples:
+                icl_data = inc_samples.get(subtopic, [])
+                if icl_data:
+                    print(f"[DEBUG] ✓ Found {len(icl_data)} ICL samples for subtopic: '{subtopic}'")
+                    print(f"[DEBUG] First sample preview: {icl_data[0]['question'][:60]}...")
+                else:
+                    print(f"[DEBUG] ✗ No ICL samples found for subtopic: '{subtopic}'")
+                    print(f"[DEBUG] Available subtopics: {list(inc_samples.keys())}")
+            else:
+                icl_data = []
+                print(f"[DEBUG] No inc_samples dictionary provided")
+            
             if wicl and not icl_data:
-                print(f"[Warning] No ICL samples found for subtopic: '{subtopic}'")
+                print(f"[WARNING] ICL enabled but no samples found for subtopic: '{subtopic}'")
+            
             prompt, sp = self.build_prompt(topic_str, wadvsys, wicl, icl_data)
 
 
