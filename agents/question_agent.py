@@ -8,12 +8,41 @@ from .question_model import QAgent
 
 import random
 import json
+import sys
+import os
+
+# Add strategy imports with comprehensive verbose logging
+print("🔧 [INIT] Loading adversarial distractor strategy...")
+try:
+    strategy_path = os.path.join(os.path.dirname(__file__), 'q-strategies', 's1-adversarial-distractors')
+    print(f"📁 [INIT] Strategy path: {strategy_path}")
+    sys.path.append(strategy_path)
+    from distractor_engine import AdversarialDistractorEngine
+    ADVERSARIAL_STRATEGY_AVAILABLE = True
+    print("✅ [INIT] Adversarial distractor strategy loaded successfully!")
+    print("🎯 [INIT] Two-phase generation with misconception/factual/semantic distractors enabled")
+except ImportError as e:
+    ADVERSARIAL_STRATEGY_AVAILABLE = False
+    print(f"❌ [INIT] Adversarial distractor strategy not available: {e}")
+    print("📝 [INIT] Falling back to standard question generation")
 
 class QuestioningAgent(object):
     r"""Agent responsible for generating questions"""
     
     def __init__(self, **kwargs):
+        print("🚀 [AGENT] Initializing QuestioningAgent...")
         self.agent = QAgent(**kwargs)
+        print(f"🤖 [AGENT] Base QAgent initialized with model type: {self.agent.model_type}")
+        
+        # Initialize adversarial strategy if available
+        if ADVERSARIAL_STRATEGY_AVAILABLE:
+            print("🎯 [STRATEGY] Initializing Adversarial Distractor Engine...")
+            self.adversarial_engine = AdversarialDistractorEngine(self.agent)
+            print("✅ [STRATEGY] Adversarial engine ready - Two-phase generation enabled")
+            print("📋 [STRATEGY] Available distractor types: misconception, factual_error, semantic")
+        else:
+            self.adversarial_engine = None
+            print("⚠️  [STRATEGY] Adversarial engine not available - using standard generation only")
 
     def build_inc_samples(self, inc_samples: List[Dict[str, str]], topic: str)->str:
         r"""
@@ -108,9 +137,75 @@ class QuestioningAgent(object):
             return resp, tl, gt
         else:
             return '', tl, gt if not isinstance(resp, list) else [''] * len(resp), tl, gt
+    
+    def generate_adversarial_question(self, topic: str, **kwargs) -> Dict:
+        """Generate question using adversarial distractor strategy with comprehensive logging"""
+        print(f"\n🎯 [ADVERSARIAL] Starting adversarial question generation for topic: {topic}")
+        
+        if not self.adversarial_engine:
+            print("❌ [ADVERSARIAL] ERROR: Adversarial strategy not available")
+            raise ValueError("Adversarial strategy not available")
+        
+        print("📋 [ADVERSARIAL] Strategy confirmed available - proceeding with two-phase generation")
+        
+        # Phase 1: Generate question and correct answer
+        print("\n🔄 [PHASE-1] Generating question and correct answer only...")
+        print(f"📝 [PHASE-1] Using specialized question-only prompts for topic: {topic}")
+        
+        try:
+            question_data = self.adversarial_engine.generate_question_and_answer(topic, **kwargs)
+            print("✅ [PHASE-1] Question and correct answer generated successfully")
+            print(f"❓ [PHASE-1] Question: {question_data.get('question', 'N/A')[:100]}...")
+            print(f"✔️  [PHASE-1] Correct answer: {question_data.get('correct_answer', 'N/A')[:50]}...")
+            print(f"🔑 [PHASE-1] Key concepts identified: {question_data.get('key_concepts', [])}")
+        except Exception as e:
+            print(f"❌ [PHASE-1] ERROR: Failed to generate question data: {e}")
+            raise
+        
+        # Phase 2: Generate adversarial distractors
+        print("\n🔄 [PHASE-2] Generating three types of adversarial distractors...")
+        print("🧠 [PHASE-2] Type 1: Misconception-based distractors (common student errors)")
+        print("⚠️  [PHASE-2] Type 2: Factual error distractors (subtle but critical mistakes)")
+        print("🎭 [PHASE-2] Type 3: Semantic similarity distractors (sounds right, logically wrong)")
+        
+        try:
+            distractors = self.adversarial_engine.generate_adversarial_distractors(question_data, **kwargs)
+            print("✅ [PHASE-2] All three distractor types generated successfully")
+            for i, distractor in enumerate(distractors, 1):
+                distractor_type = ["misconception", "factual_error", "semantic"][i-1]
+                print(f"🎯 [PHASE-2] Distractor {i} ({distractor_type}): {distractor[:60]}...")
+        except Exception as e:
+            print(f"❌ [PHASE-2] ERROR: Failed to generate distractors: {e}")
+            raise
+        
+        # Phase 3: Create complete MCQ
+        print("\n🔄 [PHASE-3] Assembling final MCQ with randomized choice order...")
+        
+        try:
+            complete_mcq = self.adversarial_engine.create_complete_mcq(question_data, distractors)
+            print("✅ [PHASE-3] Complete MCQ assembled successfully")
+            print(f"📊 [PHASE-3] Final MCQ structure: {len(complete_mcq.get('choices', []))} choices")
+            print(f"🎯 [PHASE-3] Correct answer position: {complete_mcq.get('answer', 'N/A')}")
+            print(f"🏷️  [PHASE-3] Strategy metadata: {complete_mcq.get('strategy', 'N/A')}")
+            print(f"📋 [PHASE-3] Distractor types: {complete_mcq.get('distractor_types', [])}")
+            
+            # Validate final MCQ
+            if self.adversarial_engine.validator.validate_final_mcq(complete_mcq):
+                print("✅ [VALIDATION] MCQ passed all quality checks")
+                quality_score = self.adversarial_engine.validator.calculate_quality_score(complete_mcq)
+                print(f"📈 [VALIDATION] Quality score: {quality_score:.2f}/1.0")
+            else:
+                print("⚠️  [VALIDATION] MCQ failed some quality checks but proceeding")
+            
+            print("🎉 [ADVERSARIAL] Adversarial question generation completed successfully!\n")
+            return complete_mcq
+            
+        except Exception as e:
+            print(f"❌ [PHASE-3] ERROR: Failed to create complete MCQ: {e}")
+            raise
 
 
-    def generate_batches(self, num_questions: int, topics: Dict[str, List[str]], batch_size: int = 5, wadvsys: bool=True, wicl: bool = True, inc_samples: Dict[str, List[Dict[str, str]]]|None = None, **kwargs) -> Tuple[List[str], List[int | None], List[float | None]]:
+    def generate_batches(self, num_questions: int, topics: Dict[str, List[str]], batch_size: int = 5, wadvsys: bool=True, wicl: bool = True, inc_samples: Dict[str, List[Dict[str, str]]]|None = None, use_adversarial: bool = False, **kwargs) -> Tuple[List[str], List[int | None], List[float | None]]:
         r"""
         Generate questions in batches
         ---
@@ -127,25 +222,127 @@ class QuestioningAgent(object):
         Returns:
             - Tuple[List[str], List[int | None], List[float | None]]: Generated questions, token lengths, and generation times.
         """
+        print(f"\n🚀 [BATCH] Starting batch generation: {num_questions} questions")
+        print(f"📊 [BATCH] Parameters: batch_size={batch_size}, wadvsys={wadvsys}, wicl={wicl}")
+        print(f"🎯 [BATCH] Adversarial strategy requested: {use_adversarial}")
+        
+        # Check adversarial strategy availability and determine final strategy
+        if use_adversarial and not self.adversarial_engine:
+            print("⚠️  [BATCH] WARNING: Adversarial strategy requested but not available, using standard generation")
+            use_adversarial = False
+        elif not use_adversarial and ADVERSARIAL_STRATEGY_AVAILABLE:
+            print("🎯 [BATCH] Auto-enabling adversarial strategy (available by default)")
+            use_adversarial = True
+        
+        # Show final strategy decision
+        if use_adversarial:
+            print("✅ [BATCH] STRATEGY SELECTED: Adversarial Distractor Generation")
+            print("🎯 [BATCH] Each question will use two-phase generation with sophisticated distractors")
+        else:
+            print("📝 [BATCH] STRATEGY SELECTED: Standard Question Generation")
+            print("📋 [BATCH] Using traditional batch processing with standard prompts")
+        
         extended_topics = self.populate_topics(topics, num_questions)
+        print(f"📚 [BATCH] Extended topics generated: {len(extended_topics)} topic combinations")
+        
         questions = []
         tls, gts = [], []
-        # Calculate total batches including the partial last batch
-        total_batches = (len(extended_topics) + batch_size - 1) // batch_size
-        pbar = tqdm(total=total_batches, desc="STEPS: ")
         
-        for i in range(0, len(extended_topics), batch_size):
-            batch_topics = extended_topics[i:i + batch_size]
-            batch_questions = self.generate_question(batch_topics, wadvsys, wicl, inc_samples, **kwargs)
-            questions.extend(batch_questions[0]), tls.append(batch_questions[1]), gts.append(batch_questions[2])
-            pbar.update(1)
-        # for last batch with less than batch_size
-        if len(extended_topics) % batch_size != 0:
-            batch_topics = extended_topics[-(len(extended_topics) % batch_size):]
-            batch_questions = self.generate_question(batch_topics, wadvsys, wicl, inc_samples, **kwargs)
-            questions.extend(batch_questions[0]), tls.append(batch_questions[1]), gts.append(batch_questions[2])
-            pbar.update(1)
-        pbar.close()
+        if use_adversarial:
+            # Use adversarial strategy - process one by one with detailed logging
+            print("\n🎯 [ADVERSARIAL-BATCH] Starting adversarial generation mode...")
+            print("⚡ [ADVERSARIAL-BATCH] Note: Processing individually for maximum quality (slower but better)")
+            pbar = tqdm(total=num_questions, desc="ADVERSARIAL: ")
+            
+            for i, topic_tuple in enumerate(extended_topics):
+                topic_str = f"{topic_tuple[0]}/{topic_tuple[1]}"
+                print(f"\n📍 [Q{i+1}/{num_questions}] Processing: {topic_str}")
+                
+                try:
+                    question = self.generate_adversarial_question(topic_str, **kwargs)
+                    questions.append(json.dumps(question))
+                    tls.append(None)  # Token counting handled internally
+                    gts.append(None)  # Timing handled internally
+                    print(f"✅ [Q{i+1}] Adversarial question generated successfully")
+                    
+                except Exception as e:
+                    print(f"❌ [Q{i+1}] ERROR in adversarial generation: {e}")
+                    print(f"🔄 [Q{i+1}] Falling back to standard generation...")
+                    
+                    # Fallback to standard generation
+                    try:
+                        fallback_question = self.generate_question([topic_tuple], wadvsys, wicl, inc_samples, **kwargs)
+                        questions.extend(fallback_question[0] if isinstance(fallback_question[0], list) else [fallback_question[0]])
+                        tls.append(fallback_question[1])
+                        gts.append(fallback_question[2])
+                        print(f"✅ [Q{i+1}] Fallback generation successful")
+                    except Exception as fallback_error:
+                        print(f"❌ [Q{i+1}] CRITICAL: Both adversarial and fallback failed: {fallback_error}")
+                        questions.append(json.dumps({"error": "Generation failed", "topic": topic_str}))
+                        tls.append(None)
+                        gts.append(None)
+                
+                pbar.update(1)
+            
+            pbar.close()
+            print(f"\n🎉 [ADVERSARIAL-BATCH] Completed! Generated {len(questions)} questions using adversarial strategy")
+            
+        else:
+            # Use standard batch generation with verbose logging
+            print("\n📝 [STANDARD-BATCH] Starting standard batch generation mode...")
+            total_batches = (len(extended_topics) + batch_size - 1) // batch_size
+            print(f"📊 [STANDARD-BATCH] Processing {total_batches} batches of size {batch_size}")
+            pbar = tqdm(total=total_batches, desc="STANDARD: ")
+            
+            for i in range(0, len(extended_topics), batch_size):
+                batch_topics = extended_topics[i:i + batch_size]
+                batch_num = (i // batch_size) + 1
+                print(f"\n📦 [BATCH-{batch_num}] Processing {len(batch_topics)} topics")
+                
+                try:
+                    batch_questions = self.generate_question(batch_topics, wadvsys, wicl, inc_samples, **kwargs)
+                    questions.extend(batch_questions[0])
+                    tls.append(batch_questions[1])
+                    gts.append(batch_questions[2])
+                    print(f"✅ [BATCH-{batch_num}] Generated {len(batch_questions[0])} questions successfully")
+                except Exception as e:
+                    print(f"❌ [BATCH-{batch_num}] ERROR: {e}")
+                    # Add empty results for failed batch
+                    questions.extend([''] * len(batch_topics))
+                    tls.append(None)
+                    gts.append(None)
+                
+                pbar.update(1)
+            
+            # Handle remaining topics if any
+            if len(extended_topics) % batch_size != 0:
+                remaining_topics = extended_topics[-(len(extended_topics) % batch_size):]
+                print(f"\n📦 [FINAL-BATCH] Processing remaining {len(remaining_topics)} topics")
+                
+                try:
+                    batch_questions = self.generate_question(remaining_topics, wadvsys, wicl, inc_samples, **kwargs)
+                    questions.extend(batch_questions[0])
+                    tls.append(batch_questions[1])
+                    gts.append(batch_questions[2])
+                    print(f"✅ [FINAL-BATCH] Generated {len(batch_questions[0])} questions successfully")
+                except Exception as e:
+                    print(f"❌ [FINAL-BATCH] ERROR: {e}")
+                    questions.extend([''] * len(remaining_topics))
+                    tls.append(None)
+                    gts.append(None)
+                
+                pbar.update(1)
+            
+            pbar.close()
+            print(f"\n🎉 [STANDARD-BATCH] Completed! Generated {len(questions)} questions using standard strategy")
+        
+        # Final summary
+        successful_questions = sum(1 for q in questions if q and q != '' and 'error' not in q.lower())
+        print(f"\n📈 [SUMMARY] Total questions generated: {len(questions)}")
+        print(f"✅ [SUMMARY] Successful generations: {successful_questions}")
+        print(f"❌ [SUMMARY] Failed generations: {len(questions) - successful_questions}")
+        print(f"🎯 [SUMMARY] Strategy used: {'Adversarial' if use_adversarial else 'Standard'}")
+        
         return questions, tls, gts
 
     def count_tokens_q(self, text: str) -> int:
@@ -241,16 +438,70 @@ if __name__ == "__main__":
     argparser.add_argument("--verbose", action="store_true", help="Enable verbose output for debugging.")
     args = argparser.parse_args()
 
-    inc_samples = QuestioningAgent.load_icl_samples("assets/topics_example.json")
-
-    # Load topics.json file.
-    with open("assets/topics.json") as f: topics = json.load(f)
+    print("\n" + "="*80)
+    print("🚀 [CLI] Question Agent Starting - Enhanced with Adversarial Strategy")
+    print("="*80)
     
-    agent = QuestioningAgent()
-    # gen_kwargs = {"tgps_show": True, "max_new_tokens": 1024, "temperature": 0.1, "top_p": 0.9, "do_sample": True}
-    gen_kwargs = {"tgps_show": True}
-    with open("qgen.yaml", "r") as f: gen_kwargs.update(yaml.safe_load(f))
+    print(f"📊 [CLI] Configuration: {args.num_questions} questions, batch_size={args.batch_size}")
+    print(f"📁 [CLI] Output file: {args.output_file}")
+    print(f"🔍 [CLI] Verbose mode: {args.verbose}")
+    
+    # Load configuration files with verbose logging
+    print("\n📂 [CONFIG] Loading configuration files...")
+    
+    try:
+        inc_samples = QuestioningAgent.load_icl_samples("assets/topics_example.json")
+        print("✅ [CONFIG] In-context learning samples loaded successfully")
+        print(f"📋 [CONFIG] ICL samples available for: {list(inc_samples.keys())}")
+    except Exception as e:
+        print(f"❌ [CONFIG] ERROR loading ICL samples: {e}")
+        inc_samples = {}
 
+    try:
+        with open("assets/topics.json") as f: 
+            topics = json.load(f)
+        print("✅ [CONFIG] Topics file loaded successfully")
+        total_subtopics = sum(len(subtopics) for subtopics in topics.values())
+        print(f"📚 [CONFIG] Available topics: {list(topics.keys())} ({total_subtopics} total subtopics)")
+    except Exception as e:
+        print(f"❌ [CONFIG] ERROR loading topics: {e}")
+        topics = {"General": ["Mathematics", "Science"]}
+    
+    # Initialize agent with verbose logging
+    print("\n🤖 [AGENT] Initializing QuestioningAgent...")
+    agent = QuestioningAgent()
+    
+    # Load generation parameters
+    print("\n⚙️  [CONFIG] Loading generation parameters...")
+    gen_kwargs = {"tgps_show": True}
+    
+    try:
+        with open("qgen.yaml", "r") as f: 
+            yaml_config = yaml.safe_load(f)
+            gen_kwargs.update(yaml_config)
+        print("✅ [CONFIG] YAML configuration loaded successfully")
+        print(f"📊 [CONFIG] Generation parameters: {yaml_config}")
+    except Exception as e:
+        print(f"⚠️  [CONFIG] WARNING: Could not load qgen.yaml: {e}")
+        print("📝 [CONFIG] Using default generation parameters")
+    
+    # Determine and display strategy selection
+    print("\n🎯 [STRATEGY] Determining generation strategy...")
+    use_adversarial = ADVERSARIAL_STRATEGY_AVAILABLE
+    
+    if use_adversarial:
+        print("✅ [STRATEGY] ADVERSARIAL STRATEGY ENABLED BY DEFAULT")
+        print("🎯 [STRATEGY] Two-phase generation with sophisticated distractors will be used")
+        print("📋 [STRATEGY] Features: misconception/factual/semantic distractors, quality validation")
+    else:
+        print("📝 [STRATEGY] STANDARD STRATEGY (Adversarial not available)")
+        print("📋 [STRATEGY] Traditional batch generation will be used")
+    
+    # Start generation with comprehensive logging
+    print("\n" + "-"*80)
+    print("🚀 [GENERATION] Starting question generation process...")
+    print("-"*80)
+    
     question, tls, gts = agent.generate_batches(
         num_questions=args.num_questions,
         topics=topics, 
@@ -258,6 +509,7 @@ if __name__ == "__main__":
         wadvsys=True,
         wicl=True,
         inc_samples=inc_samples,
+        use_adversarial=use_adversarial,
         **gen_kwargs
     )
     print(f"Generated {len(question)} questions!")
