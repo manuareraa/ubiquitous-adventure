@@ -25,8 +25,7 @@ class AAgent(object):
             system_prompt = "You are a helpful assistant."
         if isinstance(message, str):
             message = [message]
-        
-        # Prepare all messages for batch processing using chat template with thinking mode
+        # Prepare all messages for batch processing
         all_messages = []
         for msg in message:
             messages = [
@@ -35,74 +34,47 @@ class AAgent(object):
             ]
             all_messages.append(messages)
         
-        # Convert messages to text format using chat template with thinking mode enabled
+        # convert all messages to text format
         texts = []
         for messages in all_messages:
             text = self.tokenizer.apply_chat_template(
                 messages,
                 tokenize=False,
                 add_generation_prompt=True,
-                enable_thinking=True  # Enable thinking mode by default
+                enable_thinking=False
             )
             texts.append(text)
-        
-        # Tokenize all texts
-        model_inputs = self.tokenizer(texts, return_tensors="pt", padding=True).to(self.model.device)
-        
-        # Set generation parameters
-        tgps_show_var = kwargs.get("tgps_show", False)
-        generation_kwargs = {
-            "max_new_tokens": kwargs.get("max_new_tokens", 1024),
-            "temperature": kwargs.get("temperature", 0.6),  # Recommended for thinking mode
-            "top_p": kwargs.get("top_p", 0.95),  # Recommended for thinking mode
-            "top_k": kwargs.get("top_k", 20),
-            "do_sample": kwargs.get("do_sample", True),
-            "pad_token_id": self.tokenizer.eos_token_id,
-        }
-        
-        start_time = time.time()
-        
-        # Generate response
-        with torch.no_grad():
-            generated_ids = self.model.generate(
-                input_ids=model_inputs.input_ids,
-                attention_mask=model_inputs.attention_mask,
-                **generation_kwargs
-            )
-        
-        generation_time = time.time() - start_time
-        
-        # Process outputs and extract thinking content
+
+        # tokenize all texts together with padding
+        model_inputs = self.tokenizer(texts, return_tensors="pt", padding=True, truncation=True).to(self.model.device)
+
+        tgps_show_var = kwargs.get('tgps_show', False)
+        # conduct batch text completion
+        if tgps_show_var: start_time = time.time()   
+        generated_ids = self.model.generate(
+            **model_inputs,
+            max_new_tokens=kwargs.get('max_new_tokens', 1024),
+            pad_token_id=self.tokenizer.pad_token_id,
+        )
+        if tgps_show_var: generation_time = time.time() - start_time
+
+        # decode the batch
         batch_outs = []
-        token_len = 0
-        
-        for i, output_ids in enumerate(generated_ids):
-            # Remove input tokens to get only generated content
-            input_length = len(model_inputs.input_ids[i])
-            output_ids = output_ids[input_length:].tolist()
-            token_len += len(output_ids)
+        if tgps_show_var: token_len = 0
+        for i, (input_ids, generated_sequence) in enumerate(zip(model_inputs.input_ids, generated_ids)):
+            # extract only the newly generated tokens
+            output_ids = generated_sequence[len(input_ids):].tolist()
             
-            # Extract thinking content and final response
-            try:
-                # Find the end of thinking block (token 151668 is </think>)
-                index = len(output_ids) - output_ids[::-1].index(151668) if 151668 in output_ids else 0
-            except ValueError:
-                index = 0
+            # compute total tokens generated
+            if tgps_show_var: token_len += len(output_ids)
+
+            # remove thinking content using regex
+            # result = re.sub(r'<think>[\s\S]*?</think>', '', full_result, flags=re.DOTALL).strip()
+            index = len(output_ids) - output_ids[::-1].index(151668) if 151668 in output_ids else 0
             
-            # Decode thinking content (if any)
-            thinking_content = ""
-            if index > 0:
-                thinking_content = self.tokenizer.decode(output_ids[:index], skip_special_tokens=True).strip("\n")
-            
-            # Decode final response content
+            # decode the full result
             content = self.tokenizer.decode(output_ids[index:], skip_special_tokens=True).strip("\n")
-            
-            # For debugging/verbose mode, you can print thinking content
-            if kwargs.get("show_thinking", False) and thinking_content:
-                print(f"🧠 [THINKING]: {thinking_content[:200]}...")
-            
             batch_outs.append(content)
-        
         if tgps_show_var:
             return batch_outs[0] if len(batch_outs) == 1 else batch_outs, token_len, generation_time
         return batch_outs[0] if len(batch_outs) == 1 else batch_outs, None, None

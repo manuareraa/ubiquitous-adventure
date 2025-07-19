@@ -42,39 +42,16 @@ class QuestioningAgent(object):
         return sample_str.strip()
 
 
-    def build_prompt(self, topic: str, wadvsys: bool = True, wicl: bool = True, inc_samples: List[Dict[str, str]]|None = None, strategy: str = None) -> Tuple[str, str]:
+    def build_prompt(self, topic: str, wadvsys: bool = True, wicl: bool = True, inc_samples: List[Dict[str, str]]|None = None) -> Tuple[str, str]:
         """Generate an MCQ based question on given topic with specified difficulty"""
         
         if wadvsys:
-            # Base system prompt
-            base_sys_prompt = """
+            # TODO: Manipulate this SYS prompt for better results
+            sys_prompt = """
             You are an **expert-level examiner** with deep expertise in designing **highly challenging and conceptually rigorous multiple-choice questions (MCQs)** for the **Quantitative Aptitude and Analytical Reasoning** sections of top-tier competitive exams.
             Think step by step to generate the question and solve the same, but only output the final answer. Do not show your thinking process.
             **Please DO NOT reveal the solution steps or any intermediate reasoning.**
             """
-            
-            # Strategy prompt insertion
-            strategy_prompt = ""
-            if strategy == "adversarial":
-                strategy_prompt = """
-                **ADVANCED DISTRACTOR STRATEGY:**
-                - Create sophisticated distractors that exploit common misconceptions and logical fallacies
-                - Design choices that would appeal to test-takers who make subtle reasoning errors
-                - Include factually incorrect but plausible options that test deep conceptual understanding
-                - Ensure distractors are semantically similar to the correct answer but conceptually distinct
-                - Focus on creating questions that require multi-step reasoning to avoid trap answers
-                """
-            elif strategy == "conceptual":
-                strategy_prompt = """
-                **CONCEPTUAL DEPTH STRATEGY:**
-                - Focus on testing fundamental understanding rather than memorization
-                - Create questions that require application of principles to novel situations
-                - Design scenarios that test the boundaries of concept applicability
-                - Include choices that test common conceptual confusions
-                """
-            
-            # Combine base prompt with strategy
-            sys_prompt = base_sys_prompt + strategy_prompt
         else:
             sys_prompt = "You are an examiner tasked with creating extremely difficult multiple-choice questions"
         tmpl = (
@@ -115,19 +92,15 @@ class QuestioningAgent(object):
         return prompt, sys_prompt
 
 
-    def generate_question(self, topic: Tuple[str, str]|List[Tuple[str, str]], wadvsys: bool, wicl: bool, inc_samples: Dict[str, List[Dict[str, str]]]|None, strategy: str = None, **gen_kwargs) -> Tuple[List[str], int|None, float|None]:
+    def generate_question(self, topic: Tuple[str, str]|List[Tuple[str, str]], wadvsys: bool, wicl: bool, inc_samples: Dict[str, List[Dict[str, str]]]|None, **gen_kwargs) -> Tuple[List[str], int|None, float|None]:
         """Generate a question prompt for the LLM"""
         if isinstance(topic, list):
             prompt = []
             for t in topic:
-                # Safe ICL lookup
-                topic_samples = inc_samples.get(t[1], []) if inc_samples else []
-                p, sp = self.build_prompt(f"{t[0]}/{t[1]}", wadvsys, wicl, topic_samples, strategy)
+                p, sp = self.build_prompt(f"{t[0]}/{t[1]}", wadvsys, wicl, inc_samples[t[1]])
                 prompt.append(p)
         else:
-            # Safe ICL lookup
-            topic_samples = inc_samples.get(topic[1], []) if inc_samples else []
-            prompt, sp = self.build_prompt(f"{topic[0]}/{topic[1]}", wadvsys, wicl, topic_samples, strategy)
+            prompt, sp = self.build_prompt(f"{topic[0]}/{topic[1]}", wadvsys, wicl, inc_samples[topic[1]])
         
         resp, tl, gt = self.agent.generate_response(prompt, sp, **gen_kwargs)
 
@@ -137,7 +110,7 @@ class QuestioningAgent(object):
             return '', tl, gt if not isinstance(resp, list) else [''] * len(resp), tl, gt
 
 
-    def generate_batches(self, num_questions: int, topics: Dict[str, List[str]], batch_size: int = 5, wadvsys: bool=True, wicl: bool = True, inc_samples: Dict[str, List[Dict[str, str]]]|None = None, strategy: str = None, **kwargs) -> Tuple[List[str], List[int | None], List[float | None]]:
+    def generate_batches(self, num_questions: int, topics: Dict[str, List[str]], batch_size: int = 5, wadvsys: bool=True, wicl: bool = True, inc_samples: Dict[str, List[Dict[str, str]]]|None = None, **kwargs) -> Tuple[List[str], List[int | None], List[float | None]]:
         r"""
         Generate questions in batches
         ---
@@ -163,13 +136,13 @@ class QuestioningAgent(object):
         
         for i in range(0, len(extended_topics), batch_size):
             batch_topics = extended_topics[i:i + batch_size]
-            batch_questions = self.generate_question(batch_topics, wadvsys, wicl, inc_samples, strategy, **kwargs)
+            batch_questions = self.generate_question(batch_topics, wadvsys, wicl, inc_samples, **kwargs)
             questions.extend(batch_questions[0]), tls.append(batch_questions[1]), gts.append(batch_questions[2])
             pbar.update(1)
         # for last batch with less than batch_size
         if len(extended_topics) % batch_size != 0:
             batch_topics = extended_topics[-(len(extended_topics) % batch_size):]
-            batch_questions = self.generate_question(batch_topics, wadvsys, wicl, inc_samples, strategy, **kwargs)
+            batch_questions = self.generate_question(batch_topics, wadvsys, wicl, inc_samples, **kwargs)
             questions.extend(batch_questions[0]), tls.append(batch_questions[1]), gts.append(batch_questions[2])
             pbar.update(1)
         pbar.close()
@@ -285,7 +258,6 @@ if __name__ == "__main__":
         wadvsys=True,
         wicl=True,
         inc_samples=inc_samples,
-        strategy="adversarial",  # Default strategy enabled
         **gen_kwargs
     )
     print(f"Generated {len(question)} questions!")
