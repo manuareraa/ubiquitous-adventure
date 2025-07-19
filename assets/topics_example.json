@@ -1,37 +1,92 @@
 {
     "Truth-teller and Liar Problems": [
         {
-            "question": "On an island, three inhabitants A, B, and C make statements: A says, 'B is a liar.' B says, 'C is a liar.' C says, 'A and B are of different types.' If exactly two are liars, who is the truth-teller?",
+            "question": "A, B, C are Truth, Lie, Random in unknown order. 'Da'/'Ja' mean yes/no, mapping unknown. You ask A: “If asked whether B is Random, would you answer as C would if asked whether you are Lie?” A replies: 'da'. What follows?",
             "choices": [
-                "A) A",
-                "B) B",
-                "C) C",
-                "D) None"
+                "A) A avoids inconsistency about B.",
+                "B) A isn’t Random; no other inference is firm.",
+                "C) C cannot be Lie, absent Random disruption.",
+                "D) No definite roles deducible from this."
+            ],
+            "answer": "D",
+            "explanation": "The response involves nested hypotheticals, ambiguous language mapping, and potential randomness. Since 'da' could mean yes or no, and one speaker is Random, the information is insufficient for any definitive assignment of roles. The correct conclusion is that nothing can be concluded."
+        },
+        {
+            "question": "X, Y, Z: one Knight, one Knave, one Normal. X: “If Y’s a Knave, then Z’s a Knight.” Y: “X is Knave or Normal.” Z: “If I’m Knave, so is Y.” Who is the Knight?",
+            "choices": [
+                "A) Truthful speaker collapses nested logic.",
+                "B) Truth preserves one conditional, denies others.",
+                "C) Lie resolves cyclic roles if two align.",
+                "D) Role fits only if speaker’s claim holds."
             ],
             "answer": "C",
-            "explanation": "C's statement is consistent with A and B being liars. If A and B are both liars, then they are the same type, making C's statement false—but C is supposed to be the truth-teller. The only valid configuration with exactly two liars is A and B lying, and C truthfully stating A and B are of different types, which is false—so contradiction. Try C as liar: then A and B must differ. Let A be truthful (B is liar), then B lies (C is liar), which fits. So only consistent solution: A = truth-teller."
+            "explanation": "Testing each as Knight, only Z's assignment avoids contradiction. Z’s statement becomes vacuously true. Assigning Y as Knave and X as Normal satisfies all logic. Other arrangements fail, making Z the sole viable Knight."
         },
         {
-            "question": "In a realm with knights (always truthful), knaves (always lie), and spies (can do either), X says: 'If I am a knight, then Y is a spy.' Y says: 'X is a knave.' What is X and Y?",
+            "question": "Left sign: “Right sign is false.” Right: “Left sign is false.” One written by a Truth-Teller, one by a Liar. What can be inferred?",
             "choices": [
-                "A) X: knight, Y: spy",
-                "B) X: knave, Y: knight",
-                "C) X: spy, Y: knave",
-                "D) X: knave, Y: spy"
+                "A) Reciprocal negation forms contradiction.",
+                "B) Assumed truth induces unstable loop.",
+                "C) No valid truth assignment exists.",
+                "D) Paradox: neither statement stabilizes."
             ],
             "answer": "D",
-            "explanation": "Assume X is a knight -> Y must be a spy (from X's statement). Then Y says 'X is a knave'—which contradicts Y being a spy and telling truth. Now try X as knave: knaves lie, so the implication must be false. But 'If P then Q' is only false when P is true and Q is false, which doesn't apply here—so statement vacuously true. Y as spy saying 'X is a knave' may be true or false. Only consistent config: X is knave (lying), Y is spy (can say anything)."
+            "explanation": "Each sign declares the other false, creating a circular contradiction. Assigning truth to either produces a loop where each negates the other, a classic liar paradox. No consistent, stable truth assignment is possible. The situation is paradoxical."
         },
         {
-            "question": "Person A says, 'B is a liar.' Person B says, 'A is a truth-teller.' Who is the truth-teller and who is the liar?",
+            "question": "Two sentinels—one veracious, one mendacious—guard bifurcated paths: one fatal, one safe. One yes–no query is allowed. You ask A: “If B were asked whether left leads to safety, would he say yes?” A replies: Yes. What is logically prescribed?",
             "choices": [
-                "A) Both A and B are truth-tellers",
-                "B) Both A and B are liars",
-                "C) A is a truth-teller, B is a liar",
-                "D) A is a liar, B is a truth-teller"
+                "A) Trust left, presuming A relays B’s affirmation.",
+                "B) Reject left; layered deceit inverts truth.",
+                "C) Take the opposite, inference via negation.",
+                "D) Indeterminate sans both interlocutors."
             ],
-            "answer": "D",
-            "explanation": "If A were a truth-teller, then B would be a liar. But B says A is a truth-teller, which would be a lie if B were a liar, meaning A is a liar—a contradiction. Therefore, A must be a liar, so B is not a liar (i.e., B is a truth-teller). B's statement that A is a truth-teller is false, which fits because A is a liar."
+            "answer": "B",
+            "explanation": "This question construction neutralizes identity uncertainty. If A is truthful, he reports B’s lie; if A lies, he distorts B’s truth. In both cases, the response points to the false path. Thus, the correct action is to choose the opposite of what was affirmed."
+        },
+        {
+            "question": "Alpha, Beta, Gamma are Truth, Lie, Random (order unknown). They reply 'zok' or 'mip' (yes/no, mapping unknown). You ask Beta: “If Gamma were asked whether Alpha is Lie, would their answer match yours?” Beta says: 'zok'. What follows?",
+            "choices": [
+                "A) Gamma isn’t Truth if 'zok' implies mirroring.",
+                "B) Randomness and language bar firm conclusion.",
+                "C) Beta is not Lie nor Random, if logic holds.",
+                "D) Ambiguous code prevents direct deduction."
+            ],
+            "answer": "B",
+            "explanation": "The nested, self-referential query involves ambiguous binary terms and potential randomness from any entity. Since the answer could come from a Random speaker and the yes/no mapping is unknown, no conclusive role assignment can be made. Thus, no definitive conclusion follows."
+        },
+        {
+            "question": "X, Y, Z are Knight, Knave, Normal. X: “Y is a Knave; Z is not Knight.” Y: “If Z is a Knave, X is Knight.” Z: “I’m not Normal.” Who is the Knight?",
+            "choices": [
+                "A) Falsifying X aligns others logically.",
+                "B) Y’s conditional collapses self-inconsistently.",
+                "C) Z’s denial locks all roles by inversion.",
+                "D) X’s compound truth sustains all claims."
+            ],
+            "answer": "A",
+            "explanation": "Assuming X is lying allows Y and Z to be assigned roles that satisfy all statements: Z can’t be Knight as claimed by X, Y’s conditional holds if Y is Normal, and Z’s self-claim is false if Z is Normal. This forms a logically coherent mapping, confirming X is the Knave and Y the Knight."
+        },
+        {
+            "question": "Two papers: Left—“Right is false.” Right—“Both are false.” One writer tells truth, one lies. What must be true?",
+            "choices": [
+                "A) Mutual negation loops to paradox.",
+                "B) Right’s logic collapses if honest.",
+                "C) One fails under truth, other unresolved.",
+                "D) No stable resolution from symmetry."
+            ],
+            "answer": "A",
+            "explanation": "If Right is true and both are false, then Right itself is false, a contradiction. If Left is true, then Right is false, which supports Left. But that would mean Left is true and Right is false. Yet that conflicts with Right's claim. The setup yields a logical paradox with no consistent grounding."
+        },
+        {
+            "question": "Two guards (truth/lie) guard paths (treasure or peril). Ask one question. You ask B: “If I asked A whether right leads to treasure, would he say yes?” B says: Yes. What now?",
+            "choices": [
+                "A) Trust B if truthful; go right.",
+                "B) Invert layered logic; go left.",
+                "C) Reverse answer; path is opposite.",
+                "D) No resolution from one answer."
+            ],
+            "answer": "C",
+            "explanation": "The structure of the question ensures a lie either way: if B lies, he flips A’s true answer; if B tells the truth, he reports A’s lie. Both outcomes misrepresent the true path. Thus, you must reverse the indicated direction to reach the treasure. The correct choice is to go opposite to the answer given."
         }
     ],
     "Seating Arrangements (Linear, Circular)": [
