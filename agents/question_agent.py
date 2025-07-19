@@ -649,9 +649,15 @@ if __name__ == "__main__":
             print(q, flush=True)
         print("\n" + "="*50 + "\n\n")
         if gen_kwargs.get("tgps_show", False):
-            print("Time taken per batch generation:", gts)
-            print("Tokens generated per batch:", tls)
-            print(f"Total Time Taken: {sum(gts):.3f} seconds; Total Tokens: {sum(tls)}; TGPS: {sum(tls)/sum(gts):.3f} seconds\n\n")
+            # Filter None values to prevent TypeError
+            valid_gts = [t for t in gts if t is not None]
+            valid_tls = [t for t in tls if t is not None]
+            if valid_gts and valid_tls:
+                print("Time taken per batch generation:", valid_gts)
+                print("Tokens generated per batch:", valid_tls)
+                print(f"Total Time Taken: {sum(valid_gts):.3f} seconds; Total Tokens: {sum(valid_tls)}; TGPS: {sum(valid_tls)/sum(valid_gts):.3f} seconds\n\n")
+            else:
+                print("⚠️ [CLI] No valid timing data available")
         print("\n" + "+"*50 + "\n")
 
     # Save questions (validation and filtering already done in generate_batches)

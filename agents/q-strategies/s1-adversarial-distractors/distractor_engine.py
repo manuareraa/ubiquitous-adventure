@@ -18,11 +18,14 @@ class AdversarialDistractorEngine:
         """Phase 1: Generate question with correct answer only"""
         prompt, sys_prompt = self.prompts.get_question_only_prompt(topic)
         
+        # Remove max_new_tokens from kwargs to avoid duplicate argument
+        filtered_kwargs = {k: v for k, v in kwargs.items() if k != 'max_new_tokens'}
+        
         response = self.model_agent.generate_response(
             prompt, 
             sys_prompt, 
             max_new_tokens=self.config.QUESTION_PHASE_TOKENS,
-            **kwargs
+            **filtered_kwargs
         )
         
         try:
@@ -82,12 +85,15 @@ class AdversarialDistractorEngine:
         """Generate misconception-based distractor"""
         prompt, sys_prompt = self.prompts.get_misconception_prompt(question_data)
         
+        # Remove conflicting arguments from kwargs
+        filtered_kwargs = {k: v for k, v in kwargs.items() if k not in ['max_new_tokens', 'temperature']}
+        
         response = self.model_agent.generate_response(
             prompt, 
             sys_prompt,
             max_new_tokens=self.config.DISTRACTOR_PHASE_TOKENS,
             temperature=self.config.DISTRACTOR_TEMPERATURE,
-            **kwargs
+            **filtered_kwargs
         )
         
         return response.strip()
@@ -96,12 +102,15 @@ class AdversarialDistractorEngine:
         """Generate factual error distractor"""
         prompt, sys_prompt = self.prompts.get_factual_error_prompt(question_data)
         
+        # Remove conflicting arguments from kwargs
+        filtered_kwargs = {k: v for k, v in kwargs.items() if k not in ['max_new_tokens', 'temperature']}
+        
         response = self.model_agent.generate_response(
             prompt, 
             sys_prompt,
             max_new_tokens=self.config.DISTRACTOR_PHASE_TOKENS,
             temperature=self.config.DISTRACTOR_TEMPERATURE,
-            **kwargs
+            **filtered_kwargs
         )
         
         return response.strip()
@@ -110,12 +119,15 @@ class AdversarialDistractorEngine:
         """Generate semantic similarity distractor"""
         prompt, sys_prompt = self.prompts.get_semantic_prompt(question_data)
         
+        # Remove conflicting arguments from kwargs
+        filtered_kwargs = {k: v for k, v in kwargs.items() if k not in ['max_new_tokens', 'temperature']}
+        
         response = self.model_agent.generate_response(
             prompt, 
             sys_prompt,
             max_new_tokens=self.config.DISTRACTOR_PHASE_TOKENS,
             temperature=self.config.DISTRACTOR_TEMPERATURE,
-            **kwargs
+            **filtered_kwargs
         )
         
         return response.strip()

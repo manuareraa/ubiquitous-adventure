@@ -1,7 +1,7 @@
 # Starting with Qwen3-4B in action.
 import time
 import torch
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Tuple
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import json
 
@@ -19,6 +19,83 @@ class QAgent(object):
             torch_dtype="auto",
             device_map="auto"
         )
+
+    def build_prompt(self, topic: str, **kwargs) -> Tuple[str, str]:
+        """Build prompt for question generation with ICL examples"""
+        
+        # Get ICL examples for this topic
+        inc_samples = kwargs.get('inc_samples', {})
+        topic_key = topic.split('/')[-1] if '/' in topic else topic
+        
+        print(f"🔍 [ICL] Looking for examples for topic: '{topic_key}'")
+        
+        # Safe lookup with fallback and verbose logging
+        examples = []
+        if inc_samples and topic_key in inc_samples:
+            examples = inc_samples[topic_key]
+            print(f"✅ [ICL] Found {len(examples)} examples for '{topic_key}'")
+            if examples:
+                first_q = examples[0].get('question', '')[:100]
+                print(f"📝 [ICL] First example question: {first_q}...")
+        else:
+            available_keys = list(inc_samples.keys()) if inc_samples else []
+            print(f"⚠️ [ICL] No examples found for '{topic_key}' - available keys: {available_keys}")
+        
+        # Build ICL examples string
+        icl_examples = ""
+        if examples:
+            for i, sample in enumerate(examples[:3]):  # Limit to 3 examples
+                icl_examples += f"\nEXAMPLE {i+1}:\n"
+                icl_examples += json.dumps(sample, indent=2)
+                icl_examples += "\n"
+            print(f"📝 [ICL] ICL examples included: {len(icl_examples)} characters")
+        else:
+            print(f"⚠️ [PROMPT] No ICL examples included in prompt")
+        
+        # Enhanced system prompt based on original file approach
+        sys_prompt = """You are an **expert-level examiner** with deep expertise in designing **highly challenging and conceptually rigorous multiple-choice questions (MCQs)** for the **Quantitative Aptitude and Analytical Reasoning** sections of top-tier competitive exams.
+
+Think step by step to generate the question and solve the same, but only output the final JSON answer. Do not show your thinking process.
+
+**CRITICAL: Please DO NOT reveal the solution steps or any intermediate reasoning in your final output. Output ONLY the JSON object.**
+
+**STYLE MATCHING**: Follow the exact style, complexity, vocabulary, and structure of the provided examples. Match their tone, difficulty level, and presentation format."""
+        
+        # Remove model's preferential bias for options
+        import random
+        correct_option = random.choice(['A', 'B', 'C', 'D'])
+        distractors = ", ".join([opt for opt in ['A', 'B', 'C', 'D'] if opt != correct_option])
+        
+        # Enhanced prompt template based on original file structure
+        prompt_template = f"""Generate an EXTREMELY DIFFICULT MCQ on topic: {topic}.
+
+**CRITICAL REQUIREMENTS:**
+1. **Topic Alignment**: The "question" must be strictly relevant to the topic: {topic}.
+2. **Question Quality**: The question must be EXTREMELY DIFFICULT, clear, and test deep conceptual understanding. Avoid trivial or ambiguous questions.
+3. **Choices (4 total)**: Generate exactly FOUR multiple-choice options, labeled "A)", "B)", "C)", and "D)".
+4. **Single Correct Answer**: Ensure that option {correct_option} is the only factually correct answer.
+5. **Plausible Distractors**: Options {distractors} must be three incorrect UNIQUE choices which are highly plausible and common misconceptions related to the topic.
+6. **Answer Key**: The "answer" field in the JSON should be ONLY the letter {correct_option}.
+7. **Explanation**: The "explanation" field provides a concise (under 100 words) and clear justification for why the correct answer is correct.
+
+**STYLE MATCHING**: Follow the exact style, complexity, vocabulary, and structure of the provided examples. Match their tone, difficulty level, and presentation format.
+
+{icl_examples}
+
+**RESPONSE FORMAT**: Output ONLY a valid JSON object with this exact structure:
+
+{{
+  "topic": "{topic.split('/')[-1]}",
+  "question": "...",
+  "choices": ["A) ...", "B) ...", "C) ...", "D) ..."],
+  "answer": "{correct_option}",
+  "explanation": "Provide a brief explanation why {correct_option} is correct within 100 words."
+}}"""
+        
+        print(f"📊 [PROMPT] Total prompt length: {len(prompt_template)} characters")
+        print(f"🎯 [PROMPT] Correct answer set to: {correct_option}")
+        
+        return prompt_template, sys_prompt
 
     def generate_response(self, message: str|List[str], system_prompt: Optional[str] = None, **kwargs)->str:
         # Enhanced system prompt based on original file approach
@@ -174,8 +251,15 @@ Think step by step to generate the question and solve the same, but only output 
             batch_outs.append(final_answer)
         
         if tgps_show_var:
-            return batch_outs[0] if len(batch_outs) == 1 else batch_outs, token_len, generation_time
-        return batch_outs[0] if len(batch_outs) == 1 else batch_outs, None, None
+            if len(batch_outs) == 1:
+                return batch_outs[0], token_len, generation_time
+            else:
+                return batch_outs, token_len, generation_time
+        else:
+            if len(batch_outs) == 1:
+                return batch_outs[0]
+            else:
+                return batch_outs
 
 if __name__ == "__main__":
     # Single example generation
