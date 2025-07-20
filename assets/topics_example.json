@@ -63,12 +63,6 @@
       "choices": ["A) Q", "B) S", "C) U", "D) V"],
       "answer": "C",
       "explanation": "Building clockwise from the rigid P--S spacing, then grafting the V-T sub-structure and the gender/adjacency constraints forces a single seating. In that layout U falls directly to R’s left."
-    },
-    {
-      "question": "Eight around a circle: F second left of D; D’s opposite sits between two women; B two cw of G; H between F and A cw nonadjacent D; C not adjacent to F or D; then swap with opposite & face outward—who is B’s second right?",
-      "choices": ["A) A", "B) C", "C) F", "D) H"],
-      "answer": "A",
-      "explanation": "Solve original circle via 1–5 ⇒ unique layout: (clockwise) A-B-C-D-E-F-G-H. Opposite swaps give A↔E, B↔F, C↔G, D↔H; facing reverses direction. With outside-facing, clockwise/anticlockwise flip, placing A two steps to B’s right."
     }
   ],
   "Puzzles involving generations and family tree logic": [
@@ -89,18 +83,6 @@
       "choices": ["A) Daughter", "B) Niece-in-law", "C) Grand-niece", "D) First cousin once removed"],
       "answer": "B",
       "explanation": "Uma is Tej's wife, so Bin (her brother) is Tej's brother-in-law; Lan is Bin's daughter, thus Tej's niece-in-law."
-    },
-    {
-      "question": "Zhi wed Hua (deceased) then Lin; their son Raj (M; 18 yr senior to Lin's daughter Fen); if Raj isn't male, Lin isn't stepmother; Dan (Raj's son) weds Fen; Avi = ⅓ Raj — define Avi's relation to Zhi.",
-      "choices": ["A) Grandson", "B) Grand-nephew", "C) Great-grandson", "D) First cousin twice removed"],
-      "answer": "C",
-      "explanation": "Dan is Raj's son, making Dan Zhi's grandson; Avi is Dan's son, so Avi is Zhi's great-grandson."
-    },
-    {
-      "question": "Siblings Jia & Tao; Jia's son Raj = Ken (Tao's daughter) + 11; unless Ken isn't female, Tao isn't Raj's aunt; Bin = Ken − 7; Lan = Raj + 5 — determine Lan's relationship to Bin.",
-      "choices": ["A) Cousin", "B) Second cousin", "C) Nephew", "D) First cousin once removed"],
-      "answer": "A",
-      "explanation": "Raj is Jia's son; Ken is Tao's daughter; Bin is Ken's child, Lan is Raj's child. Since Jia and Tao are siblings, their children (Raj and Ken) are cousins, making their children (Lan and Bin) second cousins. However, the relationship asked is Lan to Bin, which would be cousins through their parents."
     }
   ]
 }
