@@ -1,162 +1,136 @@
 {
-    "Truth-teller and Liar Problems": [
-        {
-            "question": "A, B, C are Truth, Lie, Random in unknown order. 'Da'/'Ja' mean yes/no, mapping unknown. You ask A: “If asked whether B is Random, would you answer as C would if asked whether you are Lie?” A replies: 'da'. What follows?",
-            "choices": [
-                "A) A avoids inconsistency about B.",
-                "B) A isn’t Random; no other inference is firm.",
-                "C) C cannot be Lie, absent Random disruption.",
-                "D) No definite roles deducible from this."
-            ],
-            "answer": "D",
-            "explanation": "The response involves nested hypotheticals, ambiguous language mapping, and potential randomness. Since 'da' could mean yes or no, and one speaker is Random, the information is insufficient for any definitive assignment of roles. The correct conclusion is that nothing can be concluded."
-        },
-        {
-            "question": "X, Y, Z: one Knight, one Knave, one Normal. X: “If Y’s a Knave, then Z’s a Knight.” Y: “X is Knave or Normal.” Z: “If I’m Knave, so is Y.” Who is the Knight?",
-            "choices": [
-                "A) Truthful speaker collapses nested logic.",
-                "B) Truth preserves one conditional, denies others.",
-                "C) Lie resolves cyclic roles if two align.",
-                "D) Role fits only if speaker’s claim holds."
-            ],
-            "answer": "C",
-            "explanation": "Testing each as Knight, only Z's assignment avoids contradiction. Z’s statement becomes vacuously true. Assigning Y as Knave and X as Normal satisfies all logic. Other arrangements fail, making Z the sole viable Knight."
-        },
-        {
-            "question": "Left sign: “Right sign is false.” Right: “Left sign is false.” One written by a Truth-Teller, one by a Liar. What can be inferred?",
-            "choices": [
-                "A) Reciprocal negation forms contradiction.",
-                "B) Assumed truth induces unstable loop.",
-                "C) No valid truth assignment exists.",
-                "D) Paradox: neither statement stabilizes."
-            ],
-            "answer": "D",
-            "explanation": "Each sign declares the other false, creating a circular contradiction. Assigning truth to either produces a loop where each negates the other, a classic liar paradox. No consistent, stable truth assignment is possible. The situation is paradoxical."
-        },
-        {
-            "question": "Two sentinels—one veracious, one mendacious—guard bifurcated paths: one fatal, one safe. One yes–no query is allowed. You ask A: “If B were asked whether left leads to safety, would he say yes?” A replies: Yes. What is logically prescribed?",
-            "choices": [
-                "A) Trust left, presuming A relays B’s affirmation.",
-                "B) Reject left; layered deceit inverts truth.",
-                "C) Take the opposite, inference via negation.",
-                "D) Indeterminate sans both interlocutors."
-            ],
-            "answer": "B",
-            "explanation": "This question construction neutralizes identity uncertainty. If A is truthful, he reports B’s lie; if A lies, he distorts B’s truth. In both cases, the response points to the false path. Thus, the correct action is to choose the opposite of what was affirmed."
-        },
-        {
-            "question": "Alpha, Beta, Gamma are Truth, Lie, Random (order unknown). They reply 'zok' or 'mip' (yes/no, mapping unknown). You ask Beta: “If Gamma were asked whether Alpha is Lie, would their answer match yours?” Beta says: 'zok'. What follows?",
-            "choices": [
-                "A) Gamma isn’t Truth if 'zok' implies mirroring.",
-                "B) Randomness and language bar firm conclusion.",
-                "C) Beta is not Lie nor Random, if logic holds.",
-                "D) Ambiguous code prevents direct deduction."
-            ],
-            "answer": "B",
-            "explanation": "The nested, self-referential query involves ambiguous binary terms and potential randomness from any entity. Since the answer could come from a Random speaker and the yes/no mapping is unknown, no conclusive role assignment can be made. Thus, no definitive conclusion follows."
-        },
-        {
-            "question": "X, Y, Z are Knight, Knave, Normal. X: “Y is a Knave; Z is not Knight.” Y: “If Z is a Knave, X is Knight.” Z: “I’m not Normal.” Who is the Knight?",
-            "choices": [
-                "A) Falsifying X aligns others logically.",
-                "B) Y’s conditional collapses self-inconsistently.",
-                "C) Z’s denial locks all roles by inversion.",
-                "D) X’s compound truth sustains all claims."
-            ],
-            "answer": "A",
-            "explanation": "Assuming X is lying allows Y and Z to be assigned roles that satisfy all statements: Z can’t be Knight as claimed by X, Y’s conditional holds if Y is Normal, and Z’s self-claim is false if Z is Normal. This forms a logically coherent mapping, confirming X is the Knave and Y the Knight."
-        },
-        {
-            "question": "Two papers: Left—“Right is false.” Right—“Both are false.” One writer tells truth, one lies. What must be true?",
-            "choices": [
-                "A) Mutual negation loops to paradox.",
-                "B) Right’s logic collapses if honest.",
-                "C) One fails under truth, other unresolved.",
-                "D) No stable resolution from symmetry."
-            ],
-            "answer": "A",
-            "explanation": "If Right is true and both are false, then Right itself is false, a contradiction. If Left is true, then Right is false, which supports Left. But that would mean Left is true and Right is false. Yet that conflicts with Right's claim. The setup yields a logical paradox with no consistent grounding."
-        },
-        {
-            "question": "Two guards (truth/lie) guard paths (treasure or peril). Ask one question. You ask B: “If I asked A whether right leads to treasure, would he say yes?” B says: Yes. What now?",
-            "choices": [
-                "A) Trust B if truthful; go right.",
-                "B) Invert layered logic; go left.",
-                "C) Reverse answer; path is opposite.",
-                "D) No resolution from one answer."
-            ],
-            "answer": "C",
-            "explanation": "The structure of the question ensures a lie either way: if B lies, he flips A’s true answer; if B tells the truth, he reports A’s lie. Both outcomes misrepresent the true path. Thus, you must reverse the indicated direction to reach the treasure. The correct choice is to go opposite to the answer given."
-        }
-    ],
-    "Seating Arrangements (Linear, Circular)": [
-        {
-            "question": "Five friends from different countries sit circularly. The Italian sits opposite the tea-drinker. The Japanese sits two seats to the left of the coffee-drinker. The Brazilian drinks juice. The Chinese is adjacent to the American. Milk is drunk by someone adjacent to juice. Who drinks coffee?",
-            "choices": [
-                "A) American",
-                "B) Chinese",
-                "C) Japanese",
-                "D) Brazilian"
-            ],
-            "answer": "A",
-            "explanation": "Brazilian (juice) has milk adjacent. Italian opposite tea. Japanese -> 2 seats left of coffee -> American must be coffee (Chinese adjacent to American, not conflicting with other constraints)."
-        },
-        {
-            "question": "Eight people A, B, C, D, E, F, G, H sit around a circular table. Four face the center, and four face outward. A is third to the left of B, who faces the opposite direction of D. C (a doctor) sits adjacent to both E and F. G faces the center and is two seats to the left of H, who is not adjacent to B. If E faces outward, who is the engineer?",
-            "choices": [
-                "A) G",
-                "B) H",
-                "C) F",
-                "D) D"
-            ],
-            "answer": "B",
-            "explanation": "H's position and facing direction (outward) are derived from clues. Since C is a doctor and professions aren't repeated, H must be the engineer."
-        },
-        {
-            "question": "Twelve people sit in two parallel rows of six each. Front row faces south, back row faces north. P is behind Q, who is third from the left end. R faces T, who is adjacent to S. U is two places to the right of V in the same row. If W is at an extreme end in the back row, who sits at the front row's extreme right?",
-            "choices": [
-                "A) S",
-                "B) T",
-                "C) U",
-                "D) V"
-            ],
-            "answer": "A",
-            "explanation": "Q is third from left in front row; P is behind Q. R faces T (adjacent to S). U and V positions fix S at the front right."
-        }
-    ],
-    "Puzzles involving generations and family tree logic": [
-        {
-            "question": "In a family gathering, Aryan pointed to a man and said, 'He is the son of my mother's only sister, who is married to the only brother of my paternal grandfather's daughter-in-law.' How is the man related to Aryan?",
-            "choices": [
-                "A) Paternal Uncle",
-                "B) Maternal Cousin",
-                "C) Brother-in-law",
-                "D) Nephew"
-            ],
-            "answer": "B",
-            "explanation": "Aryan's mother's only sister = maternal aunt. Her son = Aryan's maternal cousin."
-        },
-        {
-            "question": "If Priya's father's only sister is the mother of Ravi, whose father is married to Tanvi's mother's maternal grandmother's granddaughter, how is Tanvi related to Priya?",
-            "choices": [
-                "A) Daughter",
-                "B) Niece",
-                "C) Sister",
-                "D) Mother"
-            ],
-            "answer": "C",
-            "explanation": "Ravi's father is married to Tanvi's mother, making Ravi and Tanvi siblings. Priya and Ravi share the same aunt, implying Ravi is Priya's cousin. Thus, Tanvi and Priya share a father -> sisters."
-        },
-        {
-            "question": "Kunal's great-grandfather has two sons and one daughter. The daughter's only granddaughter is married to the eldest son of Kunal's father's only brother. How is Kunal related to the eldest son's wife?",
-            "choices": [
-                "A) Father-in-law",
-                "B) Brother",
-                "C) Husband",
-                "D) Maternal Uncle"
-            ],
-            "answer": "D",
-            "explanation": "The woman is descended from Kunal's great-grandfather's daughter, and is married into Kunal's paternal line. That makes Kunal her maternal uncle."
-        }
-    ]
+  "Truth-teller and Liar Problems": [
+    {
+      "question": "Alpha, Beta, Gamma = Truth, Lie, Random. 'zok'/'mip' = yes/no, mapping unknown.\nYou ask Beta: “Would Gamma, if asked if Alpha is Lie, answer like you?” Beta says 'zok'. What follows?",
+      "choices": [
+        "A) Gamma isn’t Truth if replies match.",
+        "B) No conclusion—Random or code blocks logic.",
+        "C) If valid, Beta isn't Lie or Random.",
+        "D) Meaning unclear—deduction fails."
+      ],
+      "answer": "B",
+      "explanation": "The nested query involves ambiguous yes/no terms and a Random speaker. Without knowing the mapping of 'zok' and who is Random, we cannot derive any definitive roles. So, no firm conclusion is possible."
+    },
+    {
+      "question": "X, Y, Z are Knight, Knave, Normal.\nX: “Y is a Knave; Z is not Knight.”\nY: “If Z is a Knave, X is Knight.”\nZ: “I’m not Normal.”\nWho is the Knight?",
+      "choices": [
+        "A) Falsifying X aligns others logically.",
+        "B) Y’s conditional collapses self-inconsistently.",
+        "C) Z’s denial locks all roles by inversion.",
+        "D) X’s compound truth sustains all claims."
+      ],
+      "answer": "A",
+      "explanation": "Assuming X is lying allows consistent assignments: Y can be Knight, Z Normal, satisfying all statements. Other configurations produce contradictions. Thus, X is Knave, Y is Knight, Z is Normal."
+    },
+    {
+      "question": "Two papers: Left—“Right is false.” Right—“Both are false.” One writer tells truth, one lies. What must be true?",
+      "choices": [
+        "A) Mutual negation loops to paradox.",
+        "B) Right’s logic collapses if honest.",
+        "C) One fails under truth, other unresolved.",
+        "D) No stable resolution from symmetry."
+      ],
+      "answer": "A",
+      "explanation": "If Right is truthful, it says it's false—contradiction. If Left is truthful, then Right is false, which matches Left's claim. But then Right says both are false, making Left false too. It's a paradox either way."
+    },
+    {
+      "question": "Two guards (truth/lie) guard paths (treasure or peril). Ask one question. You ask B: “If I asked A whether right leads to treasure, would he say yes?” B says: Yes. What now?",
+      "choices": [
+        "A) Trust B if truthful; go right.",
+        "B) Invert layered logic; go left.",
+        "C) Reverse answer; path is opposite.",
+        "D) No resolution from one answer."
+      ],
+      "answer": "C",
+      "explanation": "This is a classic double-layered logic trap. If B is truthful, he reports A’s lie—resulting in a false answer. If B is lying, he distorts A’s truthful answer—again producing a false response. In both cases, the answer you receive is false. Therefore, to find the correct path, you must take the opposite of what B’s answer indicates."
+    }
+  ],
+  "Seating Arrangements (Linear, Circular)": [
+    {
+      "question": "Eight around a circle: P two seats anticlockwise of S; V third right of T; Q between P & V nonadjacent; R opposite X with one same-gender neighbour; U beside only men. Who sits immediately left of R?",
+      "choices": ["A) B", "B) C", "C) D", "D) H"],
+      "answer": "B",
+      "explanation": "From (i) & (ii) fix the B-D-G arc; rule-chain (iii)–(v) collapses the remaining permutations to one unique circle where C winds up three seats anti-clockwise from G, i.e., third to G’s left."
+    },
+    {
+      "question": "Seven in a north‐facing line: L–R span three seats with Q between; N immediately left of O; L left of N; S has two to his right (not extreme); P not beside Q; M immediately right of P; Q not beside O. Who occupies the rightmost seat?",
+      "choices": ["A) L", "B) Q", "C) R", "D) M"],
+      "answer": "D",
+      "explanation": "Systematic placement (start with R–L gap, slot S at the only 5th position, anchor N-O block, apply non-adjacency rules) yields the final order L-Q-N-O-R-S-P-M. Hence M sits at the extreme right."
+    },
+    {
+      "question": "Nine roundtable: P two seats ccw of S; V third right of T; Q between P & V nonadjacent; R opposite X & same-gender neighbour; U only beside men. Who sits left of R?",
+      "choices": ["A) Q", "B) S", "C) U", "D) V"],
+      "answer": "C",
+      "explanation": "Building clockwise from the rigid P--S spacing, then grafting the V-T sub-structure and the gender/adjacency constraints forces a single seating. In that layout U falls directly to R’s left."
+    },
+    {
+      "question": "Eight around a circle: F second left of D; D’s opposite sits between two women; B two cw of G; H between F and A cw nonadjacent D; C not adjacent to F or D; then swap with opposite & face outward—who is B’s second right?",
+      "choices": ["A) A", "B) C", "C) F", "D) H"],
+      "answer": "A",
+      "explanation": "Solve original circle via 1–5 ⇒ unique layout: (clockwise) A-B-C-D-E-F-G-H. Opposite swaps give A↔E, B↔F, C↔G, D↔H; facing reverses direction. With outside-facing, clockwise/anticlockwise flip, placing A two steps to B’s right."
+    }
+  ],
+  "Puzzles involving generations and family tree logic": [
+    {
+      "question": "Wei & Niu’s children Lin & Pia (F, 27 = Ken + 3); Lin isn’t Ken’s father unless they’re siblings; Raj (M, Ken − 6) is Lin’s second child — determine Raj’s linkage to Wei.",
+      "options": {
+        "A": "Son",
+        "B": "Grandson",
+        "C": "Nephew",
+        "D": "Grand-nephew",
+        "E": "First cousin once removed"
+      },
+      "correct": "B",
+      "explanation": "Lin is Wei’s child; Raj is Lin’s son (second child). Therefore Raj is Wei’s grandson."
+    },
+    {
+      "question": "Bo & twin Jia; Jia’s firstborn Yan (M despite name; 12 yr senior to Bo’s son Dev); if Yan isn’t male, Jia isn’t Dev’s aunt; Tao = 2 × Dev; Mei = Tao − 8 — ascertain Tao’s nexus to Bo.",
+      "options": {
+        "A": "Nephew",
+        "B": "Grandson",
+        "C": "Great-nephew (grand-nephew)",
+        "D": "First cousin once removed",
+        "E": "Second cousin"
+      },
+      "correct": "C",
+      "explanation": "Yan is Jia’s son, making Yan Bo’s nephew; Tao is Yan’s son, so Tao is Bo’s great-nephew (grand-nephew)."
+    },
+    {
+      "question": "Anu & Ram’s offspring Iya (= Tej + 4) & Tej; Tej’s spouse Uma (F, age = Iya − 6); unless Iya isn’t Ram’s daughter, Uma isn’t daughter-in-law; Bin = ½ Uma; Lan = Iya — specify Lan’s kinship to Lei (Tej’s middle name).",
+      "options": {
+        "A": "Daughter",
+        "B": "Niece-in-law",
+        "C": "Grand-niece",
+        "D": "First cousin once removed",
+        "E": "Sister-in-law"
+      },
+      "correct": "B",
+      "explanation": "Uma is Tej’s wife, so Bin (her brother) is Tej’s brother-in-law; Lan is Bin’s daughter, thus Tej’s niece-in-law."
+    },
+    {
+      "question": "Zhi wed Hua (deceased) then Lin; their son Raj (M; 18 yr senior to Lin’s daughter Fen); if Raj isn’t male, Lin isn’t stepmother; Dan (Raj’s son) weds Fen; Avi = ⅓ Raj — define Avi’s relation to Zhi.",
+      "options": {
+        "A": "Grandson",
+        "B": "Grand-nephew",
+        "C": "Great-grandson",
+        "D": "First cousin twice removed",
+        "E": "Nephew"
+      },
+      "correct": "C",
+      "explanation": "Raj is Zhi’s son; Dan is Raj’s son (Zhi’s grandson); Avi is Dan’s son, making him Zhi’s great-grandson."
+    },
+    {
+      "question": "Siblings Jia & Tao; Jia’s son Raj = Ken (Tao’s daughter) + 11; unless Ken isn’t female, Jia isn’t aunt; Ari = 2 × Ken; Dev = ⅓ Ari — characterize Dev’s relation to Raj.",
+      "options": {
+        "A": "Nephew",
+        "B": "Second cousin",
+        "C": "First cousin once removed",
+        "D": "Grand-nephew",
+        "E": "Grandson"
+      },
+      "correct": "C",
+      "explanation": "Raj and Ken are first cousins (children of siblings Jia & Tao); Dev is Ken’s son, so Dev is Raj’s first cousin once removed."
+    }
+  ]
 }
