@@ -73,64 +73,34 @@
   ],
   "Puzzles involving generations and family tree logic": [
     {
-      "question": "Wei & Niu’s children Lin & Pia (F, 27 = Ken + 3); Lin isn’t Ken’s father unless they’re siblings; Raj (M, Ken − 6) is Lin’s second child — determine Raj’s linkage to Wei.",
-      "options": {
-        "A": "Son",
-        "B": "Grandson",
-        "C": "Nephew",
-        "D": "Grand-nephew",
-        "E": "First cousin once removed"
-      },
-      "correct": "B",
-      "explanation": "Lin is Wei’s child; Raj is Lin’s son (second child). Therefore Raj is Wei’s grandson."
+      "question": "Wei & Niu's children Lin & Pia (F, 27 = Ken + 3); Lin isn't Ken's father unless they're siblings; Raj (M, Ken − 6) is Lin's second child — determine Raj's linkage to Wei.",
+      "choices": ["A) Son", "B) Grandson", "C) Nephew", "D) Grand-nephew"],
+      "answer": "B",
+      "explanation": "Lin is Wei's child; Raj is Lin's son (second child). Therefore Raj is Wei's grandson."
     },
     {
-      "question": "Bo & twin Jia; Jia’s firstborn Yan (M despite name; 12 yr senior to Bo’s son Dev); if Yan isn’t male, Jia isn’t Dev’s aunt; Tao = 2 × Dev; Mei = Tao − 8 — ascertain Tao’s nexus to Bo.",
-      "options": {
-        "A": "Nephew",
-        "B": "Grandson",
-        "C": "Great-nephew (grand-nephew)",
-        "D": "First cousin once removed",
-        "E": "Second cousin"
-      },
-      "correct": "C",
-      "explanation": "Yan is Jia’s son, making Yan Bo’s nephew; Tao is Yan’s son, so Tao is Bo’s great-nephew (grand-nephew)."
+      "question": "Bo & twin Jia; Jia's firstborn Yan (M despite name; 12 yr senior to Bo's son Dev); if Yan isn't male, Jia isn't Dev's aunt; Tao = 2 × Dev; Mei = Tao − 8 — ascertain Tao's nexus to Bo.",
+      "choices": ["A) Nephew", "B) Grandson", "C) Great-nephew (grand-nephew)", "D) First cousin once removed"],
+      "answer": "C",
+      "explanation": "Yan is Jia's son, making Yan Bo's nephew; Tao is Yan's son, so Tao is Bo's great-nephew (grand-nephew)."
     },
     {
-      "question": "Anu & Ram’s offspring Iya (= Tej + 4) & Tej; Tej’s spouse Uma (F, age = Iya − 6); unless Iya isn’t Ram’s daughter, Uma isn’t daughter-in-law; Bin = ½ Uma; Lan = Iya — specify Lan’s kinship to Lei (Tej’s middle name).",
-      "options": {
-        "A": "Daughter",
-        "B": "Niece-in-law",
-        "C": "Grand-niece",
-        "D": "First cousin once removed",
-        "E": "Sister-in-law"
-      },
-      "correct": "B",
-      "explanation": "Uma is Tej’s wife, so Bin (her brother) is Tej’s brother-in-law; Lan is Bin’s daughter, thus Tej’s niece-in-law."
+      "question": "Anu & Ram's offspring Iya (= Tej + 4) & Tej; Tej's spouse Uma (F, age = Iya − 6); unless Iya isn't Ram's daughter, Uma isn't daughter-in-law; Bin = ½ Uma; Lan = Iya — specify Lan's kinship to Lei (Tej's middle name).",
+      "choices": ["A) Daughter", "B) Niece-in-law", "C) Grand-niece", "D) First cousin once removed"],
+      "answer": "B",
+      "explanation": "Uma is Tej's wife, so Bin (her brother) is Tej's brother-in-law; Lan is Bin's daughter, thus Tej's niece-in-law."
     },
     {
-      "question": "Zhi wed Hua (deceased) then Lin; their son Raj (M; 18 yr senior to Lin’s daughter Fen); if Raj isn’t male, Lin isn’t stepmother; Dan (Raj’s son) weds Fen; Avi = ⅓ Raj — define Avi’s relation to Zhi.",
-      "options": {
-        "A": "Grandson",
-        "B": "Grand-nephew",
-        "C": "Great-grandson",
-        "D": "First cousin twice removed",
-        "E": "Nephew"
-      },
-      "correct": "C",
-      "explanation": "Raj is Zhi’s son; Dan is Raj’s son (Zhi’s grandson); Avi is Dan’s son, making him Zhi’s great-grandson."
+      "question": "Zhi wed Hua (deceased) then Lin; their son Raj (M; 18 yr senior to Lin's daughter Fen); if Raj isn't male, Lin isn't stepmother; Dan (Raj's son) weds Fen; Avi = ⅓ Raj — define Avi's relation to Zhi.",
+      "choices": ["A) Grandson", "B) Grand-nephew", "C) Great-grandson", "D) First cousin twice removed"],
+      "answer": "C",
+      "explanation": "Dan is Raj's son, making Dan Zhi's grandson; Avi is Dan's son, so Avi is Zhi's great-grandson."
     },
     {
-      "question": "Siblings Jia & Tao; Jia’s son Raj = Ken (Tao’s daughter) + 11; unless Ken isn’t female, Jia isn’t aunt; Ari = 2 × Ken; Dev = ⅓ Ari — characterize Dev’s relation to Raj.",
-      "options": {
-        "A": "Nephew",
-        "B": "Second cousin",
-        "C": "First cousin once removed",
-        "D": "Grand-nephew",
-        "E": "Grandson"
-      },
-      "correct": "C",
-      "explanation": "Raj and Ken are first cousins (children of siblings Jia & Tao); Dev is Ken’s son, so Dev is Raj’s first cousin once removed."
+      "question": "Siblings Jia & Tao; Jia's son Raj = Ken (Tao's daughter) + 11; unless Ken isn't female, Tao isn't Raj's aunt; Bin = Ken − 7; Lan = Raj + 5 — determine Lan's relationship to Bin.",
+      "choices": ["A) Cousin", "B) Second cousin", "C) Nephew", "D) First cousin once removed"],
+      "answer": "A",
+      "explanation": "Raj is Jia's son; Ken is Tao's daughter; Bin is Ken's child, Lan is Raj's child. Since Jia and Tao are siblings, their children (Raj and Ken) are cousins, making their children (Lan and Bin) second cousins. However, the relationship asked is Lan to Bin, which would be cousins through their parents."
     }
   ]
 }
