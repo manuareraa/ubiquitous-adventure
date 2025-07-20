@@ -32,17 +32,6 @@
       ],
       "answer": "A",
       "explanation": "If Right is truthful, it says it's false—contradiction. If Left is truthful, then Right is false, which matches Left's claim. But then Right says both are false, making Left false too. It's a paradox either way."
-    },
-    {
-      "question": "Two guards (truth/lie) guard paths (treasure or peril). Ask one question. You ask B: “If I asked A whether right leads to treasure, would he say yes?” B says: Yes. What now?",
-      "choices": [
-        "A) Trust B if truthful; go right.",
-        "B) Invert layered logic; go left.",
-        "C) Reverse answer; path is opposite.",
-        "D) No resolution from one answer."
-      ],
-      "answer": "C",
-      "explanation": "This is a classic double-layered logic trap. If B is truthful, he reports A’s lie—resulting in a false answer. If B is lying, he distorts A’s truthful answer—again producing a false response. In both cases, the answer you receive is false. Therefore, to find the correct path, you must take the opposite of what B’s answer indicates."
     }
   ],
   "Seating Arrangements (Linear, Circular)": [
